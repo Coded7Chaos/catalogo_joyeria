@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 
-export default function Show({ producto }) {
+export default function Show({ producto, relacionados }) {
     const allImages = [
         producto.url_foto, 
         ...producto.variantes.map(v => v.url_foto)
@@ -20,6 +20,7 @@ export default function Show({ producto }) {
     };
 
     return (
+        <>
         <div className="min-h-screen bg-gray-50 py-8">
             <Head title={producto.nombre} />
 
@@ -154,6 +155,60 @@ export default function Show({ producto }) {
                     </div>
                 </div>
             </div>
-        </div>
+</div>        
+
+<div className="mt-16 border-t pt-10">
+    <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        También te podría interesar
+    </h2>
+
+    {relacionados.data.length > 0 ? (
+        <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {relacionados.data.map((rel) => (
+                    // Reutilizas tu componente ProductCard aquí
+                    // O creas una tarjeta simplificada
+                    <div key={rel.id} className="border rounded-lg p-4 group">
+                        <Link href={`/catalogo/${rel.id}`}>
+                            <div className="aspect-square bg-gray-100 mb-4 overflow-hidden rounded-md">
+                                <img 
+                                    src={rel.url_foto} 
+                                    alt={rel.nombre}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                                />
+                            </div>
+                            <h3 className="font-medium text-gray-900">{rel.nombre}</h3>
+                            <p className="text-sm text-gray-500 mb-2">
+                                {rel.coincidencias} Tags en común {/* Debug visual opcional */}
+                            </p>
+                            <p className="font-bold text-gray-900">
+                                ${rel.variantes[0]?.precio || 'Ver precio'}
+                            </p>
+                        </Link>
+                    </div>
+                ))}
+            </div>
+
+            {/* Paginación de Relacionados */}
+            <div className="mt-8 flex justify-center gap-2">
+                {relacionados.links.map((link, i) => (
+                    link.url ? (
+                        <Link
+                            key={i}
+                            href={link.url}
+                            className={`px-3 py-1 border rounded ${link.active ? 'bg-black text-white' : 'bg-white'}`}
+                            preserveScroll // IMPORTANTE: Para que no suba al inicio de la página al cambiar de página
+                            only={['relacionados']} // OPTIMIZACIÓN: Solo recarga esta parte, no el producto principal
+                            dangerouslySetInnerHTML={{ __html: link.label }}
+                        />
+                    ) : null
+                ))}
+            </div>
+        </>
+    ) : (
+        <p className="text-gray-500">No hay productos relacionados por el momento.</p>
+    )}
+</div>
+</>
     );
 }

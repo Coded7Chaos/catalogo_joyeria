@@ -16,6 +16,28 @@ class CatalogoController extends Controller
     {
         $filters = $request->only(['search', 'id_categoria']);
 
+        $esLanding = !$request->has('search') &&
+                     !$request->input('id_categoria') &&
+                     ($request->input('page', 1) == 1);
+
+        $novedades = [];
+        $categoriasDestacadas = [];
+
+        if($esLanding){
+            $novedades = Producto::query()
+            ->select(['id','nombre', 'url_foto', 'id_categoria'])
+            ->with([
+                'variantes:id,id_producto,id_talla,url_foto', 
+                'tags',
+                'variantes.colores:id,color,cod_hex,tipo'
+                ])
+            ->whereHas('variantes', fn($q) => $q->where('stock', '>', 0))
+            ->latest()
+            ->take(8)
+            ->get();
+
+        }
+
         $productos = Producto::query()
             ->select(['id','nombre', 'url_foto', 'id_categoria'])
             ->with([
@@ -33,35 +55,14 @@ class CatalogoController extends Controller
             ->latest()
             ->paginate(10)
             ->withQueryString();
+
         $categorias = Categoria::all();
 
-        return Inertia::render('Productos/Index', ['productos' => $productos, 'categorias' => $categorias, 'filtros' => $filters]);
+        return Inertia::render('Productos/Index', ['productos' => $productos, 'categorias' => $categorias, 'filtros' => $filters, 
+        'novedades' => $novedades, 'esLanding' => $esLanding]);
         //return $productos;
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    // public function store(Request $request)
-    // {
-    //     $validate = $request->validate([
-    //         //datos del producto
-    //         'nombre' => 'required|string|max:150',
-    //         'url_foto' => 'nullable|url',
-    //         'id_categoria' => 'required|exists:categorias,id',
-    //         //datos de las variantes 
-    //         'variantes' => 'required|array|min:1',
-    //         'variantes.*.sku' => 'nullable|unique:variantes,sku',
-    //         'variantes.*.id_talla' => 'nullable|exists:tallas,id',
-    //         'variantes.*.precio' => 'nullable|numeric|min:0|max:99999',
-    //         'variantes.*.stock' => 'nullable|integer|min:0|max:99999',
-    //         'variantes.*.url_foto' => 'nullable|url',
-    //     ]);
-    // }
-
-    /**
-     * Display the specified resource.
-     */
     public function show(Request $request, string $id)
     {
         $producto = Producto::with([
@@ -97,26 +98,6 @@ class CatalogoController extends Controller
             'producto' => $producto,
             'relacionados' => $relacionados
         ]);
-    }
-
-    public function home(){
-
-        $novedades = Producto::query()
-            ->select(['id','nombre', 'url_foto', 'id_categoria'])
-            ->with([
-                'variantes:id,id_producto,id_talla,url_foto', 
-                'tags',
-                'variantes.colores:id,color,cod_hex,tipo'
-                ])
-            ->whereHas('variantes', fn($q) => $q->where('stock', '>', 0))
-            ->latest()
-            ->take(8)
-            ->get();
-
-
-        $categorias = Categoria::all();
-
-        return Inertia::render('Home', [ 'novedades' => $novedades, 'categorias' => $categorias ]);
     }
 
 
