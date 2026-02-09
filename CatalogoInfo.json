@@ -1,0 +1,75 @@
+"id": 4,
+      "nombre": "Omnis dolorum fugit",
+      "url_foto": "https://via.placeholder.com/640x480.png/00ee00?text=Joya",
+      "id_categoria": 3,
+      "variantes": [
+        {
+          "id": 8,
+          "id_producto": 4,
+          "id_talla": 1,
+          "url_foto": "https://via.placeholder.com/300x300.png/eeeeee?text=Variante",
+          "colores": [
+            {
+              "id": 4,
+              "color": "MidnightBlue",
+              "cod_hex": "#4ef89e",
+              "tipo": "Extra",
+              "pivot": {
+                "id_variante": 8,
+                "id_color": 4
+              }
+            }
+          ]
+        },
+        {
+          "id": 9,
+          "id_producto": 4,
+          "id_talla": 1,
+          "url_foto": "https://via.placeholder.com/300x300.png/eeeeee?text=Variante",
+          "colores": [
+            {
+              "id": 3,
+              "color": "AntiqueWhite",
+              "cod_hex": "#d3f11f",
+              "tipo": "Base",
+              "pivot": {
+                "id_variante": 9,
+                "id_color": 3
+              }
+            }
+          ]
+        }
+      ],
+      "tags": [
+        {
+          "id": 1,
+          "descripcion": "soluta",
+          "created_at": "2026-02-04T17:33:33.000000Z",
+          "updated_at": "2026-02-04T17:33:33.000000Z",
+          "pivot": {
+            "id_producto": 4,
+            "id_tag": 1
+          }
+        },
+        {
+          "id": 2,
+          "descripcion": "rerum",
+          "created_at": "2026-02-04T17:33:33.000000Z",
+          "updated_at": "2026-02-04T17:33:33.000000Z",
+          "pivot": {
+            "id_producto": 4,
+            "id_tag": 2
+          }
+        },
+        {
+          "id": 4,
+          "descripcion": "incidunt",
+          "created_at": "2026-02-04T17:33:33.000000Z",
+          "updated_at": "2026-02-04T17:33:33.000000Z",
+          "pivot": {
+            "id_producto": 4,
+            "id_tag": 4
+          }
+        }
+      ]
+    },
