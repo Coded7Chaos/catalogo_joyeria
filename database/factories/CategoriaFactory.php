@@ -16,8 +16,20 @@ class CategoriaFactory extends Factory
      */
     public function definition(): array
     {
+        // SOLUCIÓN: Usamos \Faker\Factory::create() con la barra invertida al inicio.
+        // Esto fuerza a PHP a buscar la librería real y no una función local.
+        $faker = \Faker\Factory::create();
+
         return [
-            'categoria' => ucfirst($this->faker->unique()->randomElement(['Anillos', 'Pulseras', 'Collares', 'Piercings', 'Pendientes', 'Aretes', 'Conjuntos'])),
+            'categoria' => ucfirst($faker->randomElement([
+                'Anillos', 
+                'Pulseras', 
+                'Collares', 
+                'Piercings', 
+                'Pendientes', 
+                'Aretes', 
+                'Conjuntos'
+            ])),
         ];
     }
 }
