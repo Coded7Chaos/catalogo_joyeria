@@ -8,14 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\IsAdmin;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [CatalogoController::class, 'home'])->name('home');
 
 Route::get('/catalogo', [CatalogoController::class, 'index'])->name('catalogo.index');
 

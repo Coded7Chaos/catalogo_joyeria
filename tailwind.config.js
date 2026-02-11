@@ -12,8 +12,20 @@ export default {
 
     theme: {
         extend: {
+            colors: {
+                'joya': {
+                    black: '#1A1A1A',
+                    gold: '#C8A96E',
+                    'gold-hover': '#B8944F',
+                    cream: '#FAF8F5',
+                    white: '#FFFFFF',
+                    gray: '#6B6B6B',
+                    border: '#E5E0D8',
+                    dark: '#111111',
+                },
+            },
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans: ['Inter', ...defaultTheme.fontFamily.sans],
             },
         },
     },
