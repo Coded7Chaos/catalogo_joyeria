@@ -94,8 +94,8 @@ export default function Dashboard({ stats, productosRecientes, usuariosRecientes
                                 <p className="text-sm text-joya-gray text-center py-6">Sin productos</p>
                             ) : productosRecientes.map((p) => (
                                 <div key={p.id} className="flex items-center gap-3 px-6 py-3">
-                                    {p.url_foto ? (
-                                        <img src={p.url_foto} alt={p.nombre} className="w-8 h-8 rounded object-cover border border-joya-border flex-shrink-0" />
+                                    {p.variantes?.[0]?.url_foto ? (
+                                        <img src={p.variantes[0].url_foto} alt={p.nombre} className="w-8 h-8 rounded object-cover border border-joya-border flex-shrink-0" />
                                     ) : (
                                         <div className="w-8 h-8 rounded bg-joya-cream border border-joya-border flex items-center justify-center flex-shrink-0">
                                             <svg className="w-4 h-4 text-joya-gray/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>

@@ -13,7 +13,6 @@ class Producto extends Model
 
     protected $fillable = [
         'nombre',
-        'url_foto',
         'id_categoria'
     ];
 

@@ -15,7 +15,7 @@ const NovedadCard = ({ producto }) => {
             {/* Imagen con overlay */}
             <div className="relative aspect-[3/4] rounded-xl overflow-hidden">
                 <img
-                    src={producto.url_foto || '/placeholder.jpg'}
+                    src={producto.variantes?.[0]?.url_foto || '/placeholder.jpg'}
                     alt={producto.nombre}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                 />
@@ -45,7 +45,7 @@ const NovedadCard = ({ producto }) => {
                     </h3>
                     {minPrice && (
                         <p className="text-joya-gold font-bold text-lg">
-                            ${minPrice.toFixed(2)}
+                            Bs. {minPrice.toFixed(2)}
                         </p>
                     )}
                 </div>
@@ -73,7 +73,7 @@ const ProductCard = ({ producto }) => {
             <Link href={`/catalogo/${producto.id}`} className="block">
                 <div className="aspect-square overflow-hidden bg-joya-cream relative">
                     <img
-                        src={producto.url_foto || '/placeholder.jpg'}
+                        src={producto.variantes?.[0]?.url_foto || '/placeholder.jpg'}
                         alt={producto.nombre}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -105,7 +105,7 @@ const ProductCard = ({ producto }) => {
                 <div className="flex items-center justify-between border-t border-joya-border pt-3 mt-auto">
                     <div>
                         <span className="text-xs text-joya-gray">Desde</span>
-                        <p className="text-joya-black font-bold text-lg">{minPrice ? `$${minPrice.toFixed(2)}` : 'Consultar'}</p>
+                        <p className="text-joya-black font-bold text-lg">{minPrice ? `Bs. ${minPrice.toFixed(2)}` : 'Consultar'}</p>
                     </div>
                     <Link href={`/catalogo/${producto.id}`} className="text-joya-gold text-sm font-medium hover:text-joya-gold-hover transition-colors">
                         Ver detalles →

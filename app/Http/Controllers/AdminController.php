@@ -37,7 +37,7 @@ class AdminController extends Controller
             'ventasPendientes' => Venta::where('estado', 'pendiente')->count(),
         ];
 
-        $productosRecientes = Producto::with('categoria')->latest()->take(5)->get();
+        $productosRecientes = Producto::with(['categoria', 'variantes:id,id_producto,url_foto'])->latest()->take(5)->get();
         $usuariosRecientes = Cliente::latest()->take(5)->get();
 
         return Inertia::render('Admin/Dashboard', compact('stats', 'productosRecientes', 'usuariosRecientes'));
@@ -88,7 +88,6 @@ class AdminController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'id_categoria' => 'required|exists:categorias,id',
-            'url_foto' => 'nullable|string',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',
             'variantes' => 'nullable|array',
@@ -116,7 +115,7 @@ class AdminController extends Controller
 
         DB::beginTransaction();
         try {
-            $producto = Producto::create($request->only('nombre', 'id_categoria', 'url_foto'));
+            $producto = Producto::create($request->only('nombre', 'id_categoria'));
             $producto->tags()->sync($request->input('tags', []));
 
             foreach ($variantes as $vData) {
@@ -146,7 +145,6 @@ class AdminController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'id_categoria' => 'required|exists:categorias,id',
-            'url_foto' => 'nullable|string',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',
             'variantes_new' => 'nullable|array',
@@ -197,7 +195,7 @@ class AdminController extends Controller
 
         DB::beginTransaction();
         try {
-            $producto->update($request->only('nombre', 'id_categoria', 'url_foto'));
+            $producto->update($request->only('nombre', 'id_categoria'));
             $producto->tags()->sync($request->input('tags', []));
 
             // Delete

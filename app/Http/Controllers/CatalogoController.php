@@ -152,7 +152,7 @@ class CatalogoController extends Controller
         $tagIds = $producto->tags->pluck('id')->toArray();
 
         $relacionados = Producto::query()
-            ->select(['id', 'nombre', 'url_foto', 'id_categoria'])
+            ->select(['id', 'nombre', 'id_categoria'])
             ->where('id_categoria', $producto->id_categoria)
             ->where('id', '!=', $id)
             ->withCount(['tags as coincidencias' => function ($query) use ($tagIds) {

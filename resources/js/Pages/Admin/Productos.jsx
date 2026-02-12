@@ -158,7 +158,129 @@ function InlineColorForm({ onCreated }) {
     );
 }
 
-function VariantCard({ variant, index, tallas, colores, errors, onUpdate, onRemove, onToggleColor, onReloadColors }) {
+function InlineTagForm({ onCreated }) {
+    const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [descripcion, setDescripcion] = useState('');
+
+    const submit = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSaving(true);
+        try {
+            await axios.post('/admin/tags', { descripcion });
+            setDescripcion('');
+            setOpen(false);
+            onCreated();
+        } catch (err) {
+            alert(err.response?.data?.message || 'Error al crear tag');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (!open) {
+        return (
+            <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="inline-flex items-center gap-1 text-xs text-joya-gold hover:text-joya-gold-hover transition-colors mt-1"
+            >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                Nuevo tag
+            </button>
+        );
+    }
+
+    return (
+        <div className="mt-2 p-3 border border-joya-border rounded-lg bg-gray-50 space-y-2" onClick={(e) => e.stopPropagation()}>
+            <p className="text-xs font-medium text-joya-black">Crear tag</p>
+            <input
+                type="text"
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                placeholder="Descripcion del tag"
+                className="w-full border border-joya-border rounded px-2 py-1 text-xs focus:border-joya-gold focus:ring-1 focus:ring-joya-gold"
+            />
+            <div className="flex gap-2">
+                <button
+                    type="button"
+                    onClick={submit}
+                    disabled={!descripcion || saving}
+                    className="text-xs bg-joya-black text-white px-3 py-1 rounded hover:bg-joya-dark disabled:opacity-50"
+                >
+                    {saving ? 'Creando...' : 'Crear'}
+                </button>
+                <button type="button" onClick={() => setOpen(false)} className="text-xs text-joya-gray hover:text-joya-black">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function InlineTallaForm({ onCreated }) {
+    const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [talla, setTalla] = useState('');
+
+    const submit = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setSaving(true);
+        try {
+            await axios.post('/admin/tallas', { talla });
+            setTalla('');
+            setOpen(false);
+            onCreated();
+        } catch (err) {
+            alert(err.response?.data?.message || 'Error al crear talla');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (!open) {
+        return (
+            <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="inline-flex items-center gap-1 text-xs text-joya-gold hover:text-joya-gold-hover transition-colors mt-1"
+            >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                Nueva talla
+            </button>
+        );
+    }
+
+    return (
+        <div className="mt-2 p-3 border border-joya-border rounded-lg bg-gray-50 space-y-2" onClick={(e) => e.stopPropagation()}>
+            <p className="text-xs font-medium text-joya-black">Crear talla</p>
+            <input
+                type="text"
+                value={talla}
+                onChange={(e) => setTalla(e.target.value)}
+                placeholder="Ej: S, M, L, 7, 8..."
+                className="w-full border border-joya-border rounded px-2 py-1 text-xs focus:border-joya-gold focus:ring-1 focus:ring-joya-gold"
+            />
+            <div className="flex gap-2">
+                <button
+                    type="button"
+                    onClick={submit}
+                    disabled={!talla || saving}
+                    className="text-xs bg-joya-black text-white px-3 py-1 rounded hover:bg-joya-dark disabled:opacity-50"
+                >
+                    {saving ? 'Creando...' : 'Crear'}
+                </button>
+                <button type="button" onClick={() => setOpen(false)} className="text-xs text-joya-gray hover:text-joya-black">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function VariantCard({ variant, index, tallas, colores, errors, onUpdate, onRemove, onToggleColor, onReloadColors, onReloadTallas }) {
     const [confirmDelete, setConfirmDelete] = useState(false);
 
     const fieldError = (field) => {
@@ -205,6 +327,7 @@ function VariantCard({ variant, index, tallas, colores, errors, onUpdate, onRemo
                                 {tallas.map((t) => <option key={t.id} value={t.id}>{t.talla}</option>)}
                             </select>
                             {fieldError('id_talla') && <p className="text-red-500 text-xs mt-0.5">{fieldError('id_talla')}</p>}
+                            <InlineTallaForm onCreated={onReloadTallas} />
                         </div>
                         <div>
                             <label className="text-xs font-medium text-joya-gray block mb-1">Precio</label>
@@ -242,7 +365,6 @@ function VariantCard({ variant, index, tallas, colores, errors, onUpdate, onRemo
 const emptyFormData = () => ({
     nombre: '',
     id_categoria: '',
-    url_foto: '',
     tags: [],
     variantes: [],
     variantes_delete: [],
@@ -326,7 +448,6 @@ export default function Productos({ productos, categorias, colores, tallas, tags
         setFormData({
             nombre: p.nombre,
             id_categoria: p.id_categoria,
-            url_foto: p.url_foto || '',
             tags: p.tags?.map((t) => t.id) || [],
             variantes: (p.variantes || []).map((v) => ({
                 _key: crypto.randomUUID(),
@@ -352,7 +473,6 @@ export default function Productos({ productos, categorias, colores, tallas, tags
         const payload = {
             nombre: formData.nombre,
             id_categoria: formData.id_categoria,
-            url_foto: formData.url_foto || null,
             tags: formData.tags,
         };
 
@@ -386,7 +506,7 @@ export default function Productos({ productos, categorias, colores, tallas, tags
 
     const handleDelete = (id) => router.delete(`/admin/productos/${id}`, { onSuccess: () => setDeleteConfirm(null) });
 
-    const reloadPage = () => router.reload({ only: ['colores'] });
+    const reloadPage = () => router.reload({ only: ['colores', 'tags', 'tallas'] });
 
     // ── Error mapping for variants ──
     const getVariantErrors = (index) => {
@@ -420,7 +540,7 @@ export default function Productos({ productos, categorias, colores, tallas, tags
         if (!vs?.length) return '\u2014';
         const ps = vs.map((v) => parseFloat(v.precio));
         const min = Math.min(...ps), max = Math.max(...ps);
-        return min === max ? `$${min.toFixed(2)}` : `$${min.toFixed(2)} \u2013 $${max.toFixed(2)}`;
+        return min === max ? `Bs ${min.toFixed(2)}` : `Bs ${min.toFixed(2)} \u2013 Bs ${max.toFixed(2)}`;
     };
     const getTotalStock = (vs) => vs?.reduce((s, v) => s + (v.stock || 0), 0) || 0;
 
@@ -504,24 +624,19 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                             {/* ── Product Info Section ── */}
                             <div>
                                 <h4 className="text-sm font-semibold text-joya-black uppercase tracking-wider mb-4">Informacion del producto</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                    <div className="md:col-span-1">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
                                         <label className="text-sm font-medium text-joya-black block mb-1.5">Nombre</label>
                                         <input type="text" value={formData.nombre} onChange={(e) => setField('nombre', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold" autoFocus />
                                         {formErrors.nombre && <p className="text-red-500 text-xs mt-1">{formErrors.nombre}</p>}
                                     </div>
-                                    <div className="md:col-span-1">
+                                    <div>
                                         <label className="text-sm font-medium text-joya-black block mb-1.5">Categoria</label>
                                         <select value={formData.id_categoria} onChange={(e) => setField('id_categoria', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold">
                                             <option value="">Seleccionar categoria</option>
                                             {categorias.map((c) => <option key={c.id} value={c.id}>{c.categoria}</option>)}
                                         </select>
                                         {formErrors.id_categoria && <p className="text-red-500 text-xs mt-1">{formErrors.id_categoria}</p>}
-                                    </div>
-                                    <div className="md:col-span-1">
-                                        <label className="text-sm font-medium text-joya-black block mb-1.5">Imagen</label>
-                                        <ImageDropZone value={formData.url_foto} onChange={(url) => setField('url_foto', url)} />
-                                        {formErrors.url_foto && <p className="text-red-500 text-xs mt-1">{formErrors.url_foto}</p>}
                                     </div>
                                 </div>
                                 <div className="mt-4">
@@ -535,6 +650,7 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                                         ))}
                                         {allTags.length === 0 && <p className="text-xs text-joya-gray">No hay tags disponibles.</p>}
                                     </div>
+                                    <InlineTagForm onCreated={reloadPage} />
                                 </div>
                             </div>
 
@@ -571,6 +687,7 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                                                 onRemove={removeVariant}
                                                 onToggleColor={toggleVariantColor}
                                                 onReloadColors={reloadPage}
+                                                onReloadTallas={reloadPage}
                                             />
                                         ))}
                                     </div>
@@ -603,8 +720,8 @@ function ProductRow({ producto: p, isExpanded, onToggle, onEdit, deleteConfirm, 
                 </td>
                 <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                        {p.url_foto ? (
-                            <img src={p.url_foto} alt={p.nombre} className="w-10 h-10 rounded object-cover border border-joya-border" />
+                        {p.variantes?.[0]?.url_foto ? (
+                            <img src={p.variantes[0].url_foto} alt={p.nombre} className="w-10 h-10 rounded object-cover border border-joya-border" />
                         ) : (
                             <div className="w-10 h-10 rounded bg-joya-cream border border-joya-border flex items-center justify-center">
                                 <svg className="w-5 h-5 text-joya-gray/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
@@ -662,7 +779,7 @@ function ProductRow({ producto: p, isExpanded, onToggle, onEdit, deleteConfirm, 
                                             <tr key={v.id} className="border-b border-joya-border last:border-0 hover:bg-joya-cream/30">
                                                 <td className="px-4 py-2.5 text-joya-gray font-mono">{v.sku || '\u2014'}</td>
                                                 <td className="px-4 py-2.5 text-joya-gray">{v.talla?.talla || '\u2014'}</td>
-                                                <td className="px-4 py-2.5 text-joya-black font-medium">${parseFloat(v.precio).toFixed(2)}</td>
+                                                <td className="px-4 py-2.5 text-joya-black font-medium">Bs {parseFloat(v.precio).toFixed(2)}</td>
                                                 <td className="px-4 py-2.5"><span className={v.stock === 0 ? 'text-red-500 font-medium' : 'text-joya-gray'}>{v.stock}</span></td>
                                                 <td className="px-4 py-2.5">
                                                     <div className="flex items-center gap-1">
