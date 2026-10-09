@@ -15,6 +15,6 @@ class Color extends Model
     ];
 
     public function variantes(){
-        return $this-> belongToMany(Variante::class, 'variante_color', 'id_color', 'id_variante');
+        return $this->belongsToMany(Variante::class, 'variante_color', 'id_color', 'id_variante');
     }
 }
