@@ -1,17 +1,63 @@
 import { Link, usePage, router } from '@inertiajs/react';
 import { useState, useRef, useEffect } from 'react';
+import {
+    ChevronLeft,
+    ChevronRight,
+    CloseIcon,
+    InstagramIcon,
+    MailIcon,
+    MenuIcon,
+    PhoneIcon,
+    SearchIcon,
+    TikTokIcon,
+} from '@/Components/Store/Icons';
+import { contacto } from '@/lib/catalogo';
 
-export default function CatalogoLayout({ children }) {
+const whatsappHref = `https://wa.me/591${contacto.whatsapp[0]}`;
+
+const navLinks = [
+    { name: 'Inicio', href: '/' },
+    { name: 'Catálogo', href: '/catalogo' },
+];
+
+const announcements = [
+    <>Escríbenos por WhatsApp al {contacto.whatsapp.join(' · ')}</>,
+    <>
+        Síguenos en{' '}
+        <a href={contacto.instagram} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+            Instagram
+        </a>{' '}
+        y{' '}
+        <a href={contacto.tiktok} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+            TikTok
+        </a>
+    </>,
+    <>Joyería exclusiva con diseños únicos</>,
+];
+
+function Brand({ className = '', logoClassName = 'h-10 w-10' }) {
+    return (
+        <span className={`flex items-center gap-3 ${className}`}>
+            <img src="/images/logo.png" alt="" className={`shrink-0 rounded-full object-contain ${logoClassName}`} />
+            <span className="whitespace-nowrap font-brand leading-none tracking-[0.06em]">GILDED</span>
+        </span>
+    );
+}
+
+/**
+ * Store chrome from the Figma Make design: announcement bar, header, mobile
+ * menu and footer. `transparentHeader` lets the header float over a full-bleed
+ * hero until the page scrolls.
+ */
+export default function CatalogoLayout({ children, transparentHeader = false }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [announce, setAnnounce] = useState(0);
+    const [scrolled, setScrolled] = useState(false);
+    const [search, setSearch] = useState('');
     const { url, props } = usePage();
     const user = props.auth?.user;
     const userMenuRef = useRef(null);
-
-    const navLinks = [
-        { name: 'Inicio', href: '/' },
-        { name: 'Catálogo', href: '/catalogo' },
-    ];
 
     const isActive = (href) => {
         if (href === '/') return url === '/' || url.startsWith('/?');
@@ -28,235 +74,339 @@ export default function CatalogoLayout({ children }) {
         return () => document.removeEventListener('mousedown', handleClick);
     }, []);
 
+    useEffect(() => {
+        const onScroll = () => setScrolled(window.scrollY > 40);
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+    }, []);
+
+    useEffect(() => {
+        const t = setTimeout(() => setAnnounce((s) => (s + 1) % announcements.length), 5000);
+        return () => clearTimeout(t);
+    }, [announce]);
+
     const handleLogout = (e) => {
         e.preventDefault();
         router.post('/logout');
     };
 
+    const submitSearch = () => {
+        const term = search.trim();
+        if (!term) return;
+        setMobileMenuOpen(false);
+        router.get('/catalogo', { search: term });
+    };
+
+    const solid = !transparentHeader || scrolled || mobileMenuOpen;
+
+    // Pill search box; `className` sets its size, display and colors for each spot.
+    const searchField = (className, inputProps) => (
+        <label className={`items-center gap-2.5 rounded-full border px-4 transition-colors ${className}`}>
+            <SearchIcon width={18} height={18} className="shrink-0 opacity-70" />
+            <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submitSearch()}
+                placeholder="Busca tu look ideal"
+                aria-label="Buscar joyas"
+                className="w-full min-w-0 border-0 bg-transparent p-0 font-sans text-sm text-current outline-none placeholder:text-current placeholder:opacity-60 focus:ring-0 [&::-webkit-search-cancel-button]:hidden"
+                {...inputProps}
+            />
+            {search && (
+                <button
+                    type="button"
+                    aria-label="Borrar búsqueda"
+                    onClick={() => setSearch('')}
+                    className="grid h-5 w-5 shrink-0 place-items-center rounded-full opacity-60 transition-opacity hover:opacity-100"
+                >
+                    <CloseIcon width={14} height={14} />
+                </button>
+            )}
+        </label>
+    );
+
     return (
-        <div className="min-h-screen bg-joya-cream flex flex-col">
-            {/* Navbar */}
-            <header className="bg-joya-black sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-16">
-                        {/* Logo */}
-                        <Link href="/" className="flex items-center gap-3">
-                            <img src="/images/logo.png" alt="Gilded" className="h-10 w-10 object-contain rounded-full" />
-                            <div className="hidden sm:flex flex-col leading-none">
-                                <span className="text-joya-gold text-[10px] uppercase tracking-[0.25em]">Joyería</span>
-                                <span className="text-white text-lg font-bold tracking-wider">GILDED</span>
-                            </div>
-                            <span className="sm:hidden text-white text-lg font-bold tracking-wider">GILDED</span>
-                        </Link>
+        <div className="flex min-h-screen flex-col bg-white text-tinta">
+            {/* Announcement bar */}
+            <div className="relative z-40 flex h-11 items-center bg-vino text-white">
+                <button
+                    aria-label="Aviso anterior"
+                    onClick={() => setAnnounce((a) => (a - 1 + announcements.length) % announcements.length)}
+                    className="grid h-full w-12 place-items-center border-r border-white/20"
+                >
+                    <ChevronLeft width={16} height={16} />
+                </button>
+                <p key={announce} className="flex-1 animate-rise px-2 text-center text-[13px] sm:text-sm">
+                    {announcements[announce]}
+                </p>
+                <button
+                    aria-label="Aviso siguiente"
+                    onClick={() => setAnnounce((a) => (a + 1) % announcements.length)}
+                    className="grid h-full w-12 place-items-center border-l border-white/20"
+                >
+                    <ChevronRight width={16} height={16} />
+                </button>
+            </div>
 
-                        {/* Desktop Navigation */}
-                        <nav className="hidden md:flex items-center gap-8">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    className={`text-sm uppercase tracking-wider transition-colors ${
-                                        isActive(link.href) ? 'text-joya-gold' : 'text-white/70 hover:text-joya-gold'
-                                    }`}
+            {/* Header */}
+            <header
+                className={`sticky top-0 z-30 transition-colors duration-500 ${transparentHeader ? '-mb-[73px] lg:-mb-[121px]' : ''} ${
+                    solid ? 'bg-white text-tinta shadow-[0_1px_0_rgba(83,19,30,0.1)]' : 'bg-transparent text-white'
+                }`}
+            >
+                <div className="mx-auto flex h-[73px] max-w-[1440px] items-center gap-4 px-5 sm:px-8">
+                    <button
+                        aria-label="Menú"
+                        onClick={() => setMobileMenuOpen((m) => !m)}
+                        className="-ml-1 p-1 lg:hidden"
+                    >
+                        {mobileMenuOpen ? <CloseIcon width={26} height={26} /> : <MenuIcon />}
+                    </button>
+                    <Link href="/" aria-label="Gilded, inicio">
+                        <Brand className="text-[26px] sm:text-[34px]" />
+                    </Link>
+
+                    <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-5">
+                        {searchField(
+                            `hidden h-10 w-[260px] md:flex ${
+                                solid
+                                    ? 'border-tinta/15 bg-white text-tinta focus-within:border-vino focus-within:ring-1 focus-within:ring-vino/25'
+                                    : 'border-white/50 bg-white/10 text-white backdrop-blur-sm focus-within:border-white focus-within:bg-white/20'
+                            }`,
+                        )}
+                        <button aria-label="Buscar" className="p-1 md:hidden" onClick={() => setMobileMenuOpen(true)}>
+                            <SearchIcon />
+                        </button>
+                        <span className={`hidden h-8 w-px sm:block ${solid ? 'bg-tinta/15' : 'bg-white/40'}`} />
+
+                        {user ? (
+                            <div className="relative" ref={userMenuRef}>
+                                <button
+                                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                    className="flex items-center gap-2"
+                                    aria-expanded={userMenuOpen}
                                 >
-                                    {link.name}
-                                </Link>
-                            ))}
-                        </nav>
-
-                        {/* Right side: Auth */}
-                        <div className="flex items-center gap-4">
-                            {user ? (
-                                <div className="relative" ref={userMenuRef}>
-                                    <button
-                                        onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                        className="flex items-center gap-2 text-white/70 hover:text-joya-gold transition-colors"
+                                    <span
+                                        className={`grid h-9 w-9 place-items-center rounded-full text-sm font-medium ${
+                                            solid ? 'bg-rosa text-vino' : 'bg-white/15 text-white ring-1 ring-white/50'
+                                        }`}
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-joya-gold/20 border border-joya-gold/40 flex items-center justify-center">
-                                            <span className="text-joya-gold text-xs font-bold">
-                                                {user.nombre?.charAt(0)?.toUpperCase()}
-                                            </span>
-                                        </div>
-                                        <span className="hidden md:block text-sm">{user.nombre}</span>
-                                        <svg className="w-4 h-4 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
+                                        {user.nombre?.charAt(0)?.toUpperCase()}
+                                    </span>
+                                    <span className="hidden text-sm md:block">{user.nombre}</span>
+                                </button>
 
-                                    {userMenuOpen && (
-                                        <div className="absolute right-0 mt-2 w-56 bg-white border border-joya-border rounded-lg shadow-lg py-2 z-50">
-                                            <div className="px-4 py-2 border-b border-joya-border">
-                                                <p className="text-sm font-medium text-joya-black truncate">{user.nombre}</p>
-                                                <p className="text-xs text-joya-gray truncate">{user.email}</p>
-                                            </div>
+                                {userMenuOpen && (
+                                    <div className="absolute right-0 z-50 mt-3 w-60 animate-rise overflow-hidden rounded-[18px] bg-white py-2 text-tinta shadow-[0_24px_60px_-24px_rgba(83,19,30,0.45)] ring-1 ring-vino/10">
+                                        <div className="border-b border-vino/10 px-5 pb-3 pt-2">
+                                            <p className="truncate font-display text-lg leading-tight">{user.nombre}</p>
+                                            <p className="truncate text-xs text-tinta/55">{user.email}</p>
+                                        </div>
+                                        <Link
+                                            href="/mi-cuenta"
+                                            className="block px-5 py-2.5 text-sm hover:bg-rosa"
+                                            onClick={() => setUserMenuOpen(false)}
+                                        >
+                                            Mi cuenta
+                                        </Link>
+                                        {user.role === 'admin' && (
                                             <Link
-                                                href="/mi-cuenta"
-                                                className="block px-4 py-2 text-sm text-joya-gray hover:text-joya-black hover:bg-joya-cream transition-colors"
+                                                href="/admin"
+                                                className="block px-5 py-2.5 text-sm font-medium text-vino hover:bg-rosa"
                                                 onClick={() => setUserMenuOpen(false)}
                                             >
-                                                Mi Cuenta
+                                                Panel de administración
                                             </Link>
-                                            {user.role === 'admin' && (
-                                                <Link
-                                                    href="/admin"
-                                                    className="block px-4 py-2 text-sm text-joya-gold hover:bg-joya-cream transition-colors font-medium"
-                                                    onClick={() => setUserMenuOpen(false)}
-                                                >
-                                                    Panel Admin
-                                                </Link>
-                                            )}
-                                            <button
-                                                onClick={handleLogout}
-                                                className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
-                                            >
-                                                Cerrar Sesión
-                                            </button>
-                                        </div>
+                                        )}
+                                        <button
+                                            onClick={handleLogout}
+                                            className="w-full px-5 py-2.5 text-left text-sm text-tinta/60 hover:bg-rosa hover:text-vino"
+                                        >
+                                            Cerrar sesión
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="hidden items-center gap-4 md:flex">
+                                <Link href="/login" className="text-sm opacity-80 transition-opacity hover:opacity-100">
+                                    Iniciar sesión
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                                        solid ? 'bg-vino text-white hover:bg-vino-deep' : 'bg-white text-tinta hover:bg-champan hover:text-white'
+                                    }`}
+                                >
+                                    Crear cuenta
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Desktop nav */}
+                <nav className={`hidden border-t lg:block ${solid ? 'border-vino/10' : 'border-white/30'}`} aria-label="Principal">
+                    <div className="mx-auto flex h-12 max-w-[1440px] items-center gap-[49px] px-8 font-nav text-[20px] font-light leading-[normal]">
+                        {navLinks.map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className={`relative pt-1 after:absolute after:-bottom-1 after:left-0 after:h-px after:bg-current after:transition-all hover:after:w-full ${
+                                    isActive(link.href) ? 'after:w-full' : 'after:w-0'
+                                }`}
+                            >
+                                {link.name}
+                            </Link>
+                        ))}
+                        <a
+                            href={whatsappHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-auto font-sans text-[13px] uppercase tracking-[0.16em] opacity-80 hover:opacity-100"
+                        >
+                            Escríbenos
+                        </a>
+                    </div>
+                </nav>
+
+                {/* Mobile menu */}
+                {mobileMenuOpen && (
+                    <div className="animate-rise border-t border-vino/10 bg-white px-5 pb-8 text-tinta lg:hidden">
+                        {searchField('mt-5 flex h-12 border-transparent bg-rosa text-tinta focus-within:border-vino/40', {
+                            autoFocus: true,
+                        })}
+                        <ul className="mt-4 divide-y divide-vino/10">
+                            {navLinks.map((link) => (
+                                <li key={link.href}>
+                                    <Link
+                                        href={link.href}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className={`flex w-full items-center justify-between py-4 font-nav text-[20px] font-light leading-[normal] ${
+                                            isActive(link.href) ? 'text-vino' : ''
+                                        }`}
+                                    >
+                                        {link.name} <ChevronRight width={18} height={18} className="text-vino" />
+                                    </Link>
+                                </li>
+                            ))}
+                            {user ? (
+                                <>
+                                    <li>
+                                        <Link href="/mi-cuenta" onClick={() => setMobileMenuOpen(false)} className="block py-4 text-sm">
+                                            Mi cuenta
+                                        </Link>
+                                    </li>
+                                    {user.role === 'admin' && (
+                                        <li>
+                                            <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="block py-4 text-sm font-medium text-vino">
+                                                Panel de administración
+                                            </Link>
+                                        </li>
                                     )}
-                                </div>
+                                    <li>
+                                        <button onClick={handleLogout} className="block w-full py-4 text-left text-sm text-tinta/60">
+                                            Cerrar sesión
+                                        </button>
+                                    </li>
+                                </>
                             ) : (
-                                <div className="hidden md:flex items-center gap-3">
+                                <li className="flex gap-3 pt-5">
                                     <Link
                                         href="/login"
-                                        className="text-sm text-white/70 hover:text-joya-gold transition-colors"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="flex-1 rounded-full border border-tinta/15 py-3 text-center text-sm"
                                     >
-                                        Iniciar Sesión
+                                        Iniciar sesión
                                     </Link>
                                     <Link
                                         href="/register"
-                                        className="text-sm bg-joya-gold text-joya-black px-4 py-1.5 font-medium hover:bg-joya-gold-hover transition-colors"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="flex-1 rounded-full bg-vino py-3 text-center text-sm font-medium text-white"
                                     >
-                                        Crear Cuenta
+                                        Crear cuenta
                                     </Link>
-                                </div>
+                                </li>
                             )}
-
-                            {/* Mobile menu button */}
-                            <button
-                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                className="md:hidden text-white p-2"
-                            >
-                                {mobileMenuOpen ? (
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                ) : (
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
-                                    </svg>
-                                )}
-                            </button>
-                        </div>
+                        </ul>
                     </div>
-
-                    {/* Mobile Navigation */}
-                    {mobileMenuOpen && (
-                        <div className="md:hidden border-t border-white/10 pb-4">
-                            {navLinks.map((link) => (
-                                <Link
-                                    key={link.href}
-                                    href={link.href}
-                                    onClick={() => setMobileMenuOpen(false)}
-                                    className={`block py-3 text-sm uppercase tracking-wider ${
-                                        isActive(link.href) ? 'text-joya-gold' : 'text-white/70'
-                                    }`}
-                                >
-                                    {link.name}
-                                </Link>
-                            ))}
-                            {!user && (
-                                <div className="border-t border-white/10 mt-2 pt-3 space-y-2">
-                                    <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-white/70">
-                                        Iniciar Sesión
-                                    </Link>
-                                    <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-joya-gold font-medium">
-                                        Crear Cuenta
-                                    </Link>
-                                </div>
-                            )}
-                            {user && (
-                                <div className="border-t border-white/10 mt-2 pt-3 space-y-2">
-                                    <Link href="/mi-cuenta" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-white/70">
-                                        Mi Cuenta
-                                    </Link>
-                                    {user.role === 'admin' && (
-                                        <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-joya-gold font-medium">
-                                            Panel Admin
-                                        </Link>
-                                    )}
-                                    <button onClick={handleLogout} className="block py-2 text-sm text-red-400">
-                                        Cerrar Sesión
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
+                )}
             </header>
 
             {/* Main Content */}
             <main className="flex-1">{children}</main>
 
             {/* Footer */}
-            <footer className="bg-joya-dark text-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-                        {/* Brand */}
-                        <div className="flex flex-col items-start">
-                            <div className="flex items-center gap-3 mb-4">
-                                <img src="/images/logo.png" alt="Gilded" className="h-12 w-12 object-contain rounded-full" />
-                                <div>
-                                    <span className="text-joya-gold text-[10px] uppercase tracking-[0.25em] block">Joyería</span>
-                                    <span className="text-white text-xl font-bold tracking-wider">GILDED</span>
-                                </div>
-                            </div>
-                            <p className="text-white/50 text-sm leading-relaxed">
-                                Joyería exclusiva con diseños únicos que reflejan tu estilo personal. Calidad premium en cada pieza.
-                            </p>
-                        </div>
-
-                        {/* Links */}
-                        <div>
-                            <h4 className="text-joya-gold text-sm uppercase tracking-wider font-semibold mb-4">Navegación</h4>
-                            <ul className="space-y-3">
-                                <li><Link href="/" className="text-white/50 hover:text-joya-gold text-sm transition-colors">Inicio</Link></li>
-                                <li><Link href="/catalogo" className="text-white/50 hover:text-joya-gold text-sm transition-colors">Catálogo</Link></li>
-                            </ul>
-                        </div>
-
-                        {/* Contact */}
-                        <div>
-                            <h4 className="text-joya-gold text-sm uppercase tracking-wider font-semibold mb-4">Contacto</h4>
-                            <ul className="space-y-3">
-                                <li className="flex items-center gap-3 text-white/50 text-sm">
-                                    <svg className="w-4 h-4 text-joya-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                    contacto@gilded.com
+            <footer className="bg-vino-deep text-white">
+                <div className="mx-auto grid max-w-[1440px] gap-12 px-5 py-16 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
+                    <div>
+                        <Brand className="text-[32px] sm:text-[40px]" logoClassName="h-12 w-12" />
+                        <p className="mt-5 max-w-sm text-white/65">
+                            Joyería exclusiva con diseños únicos que reflejan tu estilo personal. Calidad premium en cada pieza.
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-[12px] uppercase tracking-[0.2em] text-champan">Navegación</p>
+                        <ul className="mt-4 space-y-2.5 font-nav text-[20px] font-light leading-[normal]">
+                            {navLinks.map((link) => (
+                                <li key={link.href}>
+                                    <Link href={link.href} className="hover:text-champan">
+                                        {link.name}
+                                    </Link>
                                 </li>
-                                <li className="flex items-center gap-3 text-white/50 text-sm">
-                                    <svg className="w-4 h-4 text-joya-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                                    73059904
-                                </li>
-                                <li className="flex items-center gap-3 text-white/50 text-sm">
-                                    <svg className="w-4 h-4 text-joya-gold flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                                    73707000
-                                </li>
-                            </ul>
-                            <div className="flex items-center gap-4 mt-5">
-                                <a href="https://www.instagram.com/gilded_jewel_ry?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-joya-gold transition-colors" title="Instagram">
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                            ))}
+                            <li>
+                                <Link href={user ? '/mi-cuenta' : '/login'} className="hover:text-champan">
+                                    {user ? 'Mi cuenta' : 'Iniciar sesión'}
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p className="text-[12px] uppercase tracking-[0.2em] text-champan">Contacto</p>
+                        <ul className="mt-4 space-y-3 text-white/80">
+                            <li className="flex items-center gap-3">
+                                <MailIcon className="shrink-0 text-champan" />
+                                <a href={`mailto:${contacto.email}`} className="hover:text-champan">
+                                    {contacto.email}
                                 </a>
-                                <a href="https://www.tiktok.com/@gilded_jewels0?is_from_webapp=1&sender_device=pc" target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-joya-gold transition-colors" title="TikTok">
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 0010.86 4.46V13a8.28 8.28 0 005.58 2.17v-3.44a4.85 4.85 0 01-1.99-.44l-.01-4.6z"/></svg>
-                                </a>
-                            </div>
+                            </li>
+                            {contacto.whatsapp.map((numero) => (
+                                <li key={numero} className="flex items-center gap-3">
+                                    <PhoneIcon className="shrink-0 text-champan" />
+                                    {numero}
+                                </li>
+                            ))}
+                        </ul>
+                        <div className="mt-5 flex items-center gap-3">
+                            <a
+                                href={contacto.instagram}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Instagram"
+                                className="grid h-10 w-10 place-items-center rounded-full ring-1 ring-white/30 transition-colors hover:bg-white hover:text-vino"
+                            >
+                                <InstagramIcon width={18} height={18} />
+                            </a>
+                            <a
+                                href={contacto.tiktok}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="TikTok"
+                                className="grid h-10 w-10 place-items-center rounded-full ring-1 ring-white/30 transition-colors hover:bg-white hover:text-vino"
+                            >
+                                <TikTokIcon width={18} height={18} />
+                            </a>
                         </div>
                     </div>
-
-                    <div className="border-t border-white/10 mt-12 pt-8 text-center">
-                        <p className="text-white/30 text-sm">&copy; {new Date().getFullYear()} Joyería Gilded. Todos los derechos reservados.</p>
-                    </div>
+                </div>
+                <div className="border-t border-white/10 py-6 text-center text-xs text-white/45">
+                    &copy; {new Date().getFullYear()} Joyería Gilded. Todos los derechos reservados.
                 </div>
             </footer>
         </div>
     );
 }
+

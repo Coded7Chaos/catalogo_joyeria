@@ -158,7 +158,7 @@ class CatalogoController extends Controller
             ->withCount(['tags as coincidencias' => function ($query) use ($tagIds) {
                 $query->whereIn('tags.id', $tagIds);
             }])
-            ->having('coincidencias', '>', 0)
+            ->whereHas('tags', fn($query) => $query->whereIn('tags.id', $tagIds))
             ->orderByDesc('coincidencias')
             ->latest()
             ->with([

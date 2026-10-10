@@ -60,10 +60,10 @@ export default function Proveedores({ proveedores, filtros }) {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                     <div>
-                        <h1 className="text-2xl font-bold text-joya-black">Proveedores</h1>
+                        <h1 className="font-display text-[40px] font-normal leading-none text-tinta">Proveedores</h1>
                         <p className="text-joya-gray text-sm mt-1">{proveedores.total} proveedor{proveedores.total !== 1 ? 'es' : ''} en total</p>
                     </div>
-                    <button onClick={openCreate} className="inline-flex items-center gap-2 bg-joya-black text-white px-5 py-2.5 text-sm font-medium hover:bg-joya-dark transition-colors">
+                    <button onClick={openCreate} className="inline-flex items-center gap-2 rounded-full bg-vino text-white px-5 py-2.5 text-sm font-medium hover:bg-vino-deep transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         Nuevo Proveedor
                     </button>
@@ -89,12 +89,12 @@ export default function Proveedores({ proveedores, filtros }) {
                         defaultValue={filtros.search || ''}
                         onChange={(e) => handleSearch(e.target.value)}
                         placeholder="Buscar proveedores..."
-                        className="w-full sm:max-w-sm border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold"
+                        className="w-full sm:max-w-sm border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
                     />
                 </div>
 
                 {/* Table */}
-                <div className="bg-white border border-joya-border rounded-lg overflow-hidden">
+                <div className="bg-white border border-joya-border rounded-[18px] overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -169,7 +169,7 @@ export default function Proveedores({ proveedores, filtros }) {
                                         href={link.url || '#'}
                                         className={`px-3 py-1 text-xs rounded transition-colors ${
                                             link.active
-                                                ? 'bg-joya-black text-white'
+                                                ? 'bg-vino text-white'
                                                 : link.url
                                                     ? 'text-joya-gray hover:text-joya-black'
                                                     : 'text-joya-gray/30 cursor-default'
@@ -203,7 +203,7 @@ export default function Proveedores({ proveedores, filtros }) {
                                     type="text"
                                     value={form.data.nombre}
                                     onChange={(e) => form.setData('nombre', e.target.value)}
-                                    className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold"
+                                    className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
                                     autoFocus
                                     required
                                 />
@@ -216,7 +216,7 @@ export default function Proveedores({ proveedores, filtros }) {
                                     type="text"
                                     value={form.data.telefono}
                                     onChange={(e) => form.setData('telefono', e.target.value)}
-                                    className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold"
+                                    className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
                                 />
                                 {form.errors.telefono && <p className="text-red-500 text-xs mt-1">{form.errors.telefono}</p>}
                             </div>
@@ -227,7 +227,7 @@ export default function Proveedores({ proveedores, filtros }) {
                                     type="text"
                                     value={form.data.direccion}
                                     onChange={(e) => form.setData('direccion', e.target.value)}
-                                    className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold"
+                                    className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
                                 />
                                 {form.errors.direccion && <p className="text-red-500 text-xs mt-1">{form.errors.direccion}</p>}
                             </div>
@@ -238,7 +238,7 @@ export default function Proveedores({ proveedores, filtros }) {
                                     value={form.data.notas}
                                     onChange={(e) => form.setData('notas', e.target.value)}
                                     rows={3}
-                                    className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold resize-none"
+                                    className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25 resize-none"
                                 />
                                 {form.errors.notas && <p className="text-red-500 text-xs mt-1">{form.errors.notas}</p>}
                             </div>
@@ -247,7 +247,7 @@ export default function Proveedores({ proveedores, filtros }) {
                                 <button
                                     type="submit"
                                     disabled={form.processing}
-                                    className="flex-1 bg-joya-black text-white py-2.5 text-sm font-semibold uppercase tracking-wider hover:bg-joya-dark transition-colors disabled:opacity-50"
+                                    className="flex-1 rounded-full bg-vino text-white py-2.5 text-sm font-semibold uppercase tracking-wider hover:bg-vino-deep transition-colors disabled:opacity-50"
                                 >
                                     {form.processing ? 'Guardando...' : editing ? 'Actualizar' : 'Crear'}
                                 </button>

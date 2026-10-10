@@ -8,24 +8,60 @@ export default {
         './storage/framework/views/*.php',
         './resources/views/**/*.blade.php',
         './resources/js/**/*.jsx',
+        './resources/js/**/*.js',
     ],
 
     theme: {
         extend: {
             colors: {
+                // Paleta del diseño de Figma Make: vino + rosa empolvado + dorado champán + azul marino
+                vino: {
+                    DEFAULT: '#53131e',
+                    deep: '#34090f',
+                    soft: '#7a2232',
+                },
+                rosa: {
+                    DEFAULT: '#f7e6e2',
+                    deep: '#efd2cb',
+                },
+                champan: {
+                    DEFAULT: '#c9a46a',
+                    deep: '#a9834a',
+                },
+                marino: '#053c5e',
+                tinta: '#1b1214',
+                humo: '#f3f0ef',
+                // Nombres originales del proyecto, apuntando a la paleta de Figma
+                // para que todas las páginas (tienda, cuenta y admin) la compartan.
                 'joya': {
-                    black: '#1A1A1A',
-                    gold: '#C8A96E',
-                    'gold-hover': '#B8944F',
-                    cream: '#FAF8F5',
+                    black: '#1b1214',
+                    gold: '#7a2232',
+                    'gold-hover': '#53131e',
+                    cream: '#f3f0ef',
                     white: '#FFFFFF',
-                    gray: '#6B6B6B',
-                    border: '#E5E0D8',
-                    dark: '#111111',
+                    gray: '#7d6c6f',
+                    border: '#ebe1e1',
+                    dark: '#34090f',
                 },
             },
             fontFamily: {
-                sans: ['Inter', ...defaultTheme.fontFamily.sans],
+                sans: ['"DM Sans"', ...defaultTheme.fontFamily.sans],
+                display: ['Newsreader', 'Georgia', 'serif'],
+                brand: ['"IM Fell French Canon"', 'Newsreader', 'Georgia', 'serif'],
+                nav: ['"Hind Mysuru"', '"DM Sans"', 'sans-serif'],
+                hind: ['"Hind Mysuru"', '"DM Sans"', 'sans-serif'],
+                holtwood: ['"Holtwood One SC"', 'Georgia', 'serif'],
+                apple: ['"Homemade Apple"', 'cursive'],
+                hubballi: ['Hubballi', '"DM Sans"', 'sans-serif'],
+            },
+            keyframes: {
+                rise: {
+                    from: { opacity: '0', transform: 'translateY(18px)' },
+                    to: { opacity: '1', transform: 'translateY(0)' },
+                },
+            },
+            animation: {
+                rise: 'rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both',
             },
         },
     },

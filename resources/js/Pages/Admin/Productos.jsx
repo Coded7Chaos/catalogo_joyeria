@@ -122,7 +122,7 @@ function InlineColorForm({ onCreated }) {
                     value={data.color}
                     onChange={(e) => setData({ ...data, color: e.target.value })}
                     placeholder="Nombre"
-                    className="flex-1 border border-joya-border rounded px-2 py-1 text-xs focus:border-joya-gold focus:ring-1 focus:ring-joya-gold"
+                    className="flex-1 border border-joya-border rounded px-2 py-1 text-xs focus:border-vino focus:ring-1 focus:ring-vino/25"
                 />
                 <input
                     type="color"
@@ -134,7 +134,7 @@ function InlineColorForm({ onCreated }) {
             <select
                 value={data.tipo}
                 onChange={(e) => setData({ ...data, tipo: e.target.value })}
-                className="w-full border border-joya-border rounded px-2 py-1 text-xs focus:border-joya-gold focus:ring-1 focus:ring-joya-gold"
+                className="w-full border border-joya-border rounded px-2 py-1 text-xs focus:border-vino focus:ring-1 focus:ring-vino/25"
             >
                 <option value="solido">Solido</option>
                 <option value="metalico">Metalico</option>
@@ -146,7 +146,7 @@ function InlineColorForm({ onCreated }) {
                     type="button"
                     onClick={submit}
                     disabled={!data.color || saving}
-                    className="text-xs bg-joya-black text-white px-3 py-1 rounded hover:bg-joya-dark disabled:opacity-50"
+                    className="text-xs bg-vino text-white px-3 py-1 rounded hover:bg-vino-deep disabled:opacity-50"
                 >
                     {saving ? 'Creando...' : 'Crear'}
                 </button>
@@ -200,14 +200,14 @@ function InlineTagForm({ onCreated }) {
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 placeholder="Descripcion del tag"
-                className="w-full border border-joya-border rounded px-2 py-1 text-xs focus:border-joya-gold focus:ring-1 focus:ring-joya-gold"
+                className="w-full border border-joya-border rounded px-2 py-1 text-xs focus:border-vino focus:ring-1 focus:ring-vino/25"
             />
             <div className="flex gap-2">
                 <button
                     type="button"
                     onClick={submit}
                     disabled={!descripcion || saving}
-                    className="text-xs bg-joya-black text-white px-3 py-1 rounded hover:bg-joya-dark disabled:opacity-50"
+                    className="text-xs bg-vino text-white px-3 py-1 rounded hover:bg-vino-deep disabled:opacity-50"
                 >
                     {saving ? 'Creando...' : 'Crear'}
                 </button>
@@ -261,14 +261,14 @@ function InlineTallaForm({ onCreated }) {
                 value={talla}
                 onChange={(e) => setTalla(e.target.value)}
                 placeholder="Ej: S, M, L, 7, 8..."
-                className="w-full border border-joya-border rounded px-2 py-1 text-xs focus:border-joya-gold focus:ring-1 focus:ring-joya-gold"
+                className="w-full border border-joya-border rounded px-2 py-1 text-xs focus:border-vino focus:ring-1 focus:ring-vino/25"
             />
             <div className="flex gap-2">
                 <button
                     type="button"
                     onClick={submit}
                     disabled={!talla || saving}
-                    className="text-xs bg-joya-black text-white px-3 py-1 rounded hover:bg-joya-dark disabled:opacity-50"
+                    className="text-xs bg-vino text-white px-3 py-1 rounded hover:bg-vino-deep disabled:opacity-50"
                 >
                     {saving ? 'Creando...' : 'Crear'}
                 </button>
@@ -317,12 +317,12 @@ function VariantCard({ variant, index, tallas, colores, errors, onUpdate, onRemo
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                         <div>
                             <label className="text-xs font-medium text-joya-gray block mb-1">SKU</label>
-                            <input type="text" value={variant.sku} onChange={(e) => onUpdate(variant._key, 'sku', e.target.value)} placeholder="SKU-001" className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold" />
+                            <input type="text" value={variant.sku} onChange={(e) => onUpdate(variant._key, 'sku', e.target.value)} placeholder="SKU-001" className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
                             {fieldError('sku') && <p className="text-red-500 text-xs mt-0.5">{fieldError('sku')}</p>}
                         </div>
                         <div>
                             <label className="text-xs font-medium text-joya-gray block mb-1">Talla</label>
-                            <select value={variant.id_talla} onChange={(e) => onUpdate(variant._key, 'id_talla', e.target.value)} className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold">
+                            <select value={variant.id_talla} onChange={(e) => onUpdate(variant._key, 'id_talla', e.target.value)} className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25">
                                 <option value="">Sin talla</option>
                                 {tallas.map((t) => <option key={t.id} value={t.id}>{t.talla}</option>)}
                             </select>
@@ -331,12 +331,12 @@ function VariantCard({ variant, index, tallas, colores, errors, onUpdate, onRemo
                         </div>
                         <div>
                             <label className="text-xs font-medium text-joya-gray block mb-1">Precio</label>
-                            <input type="number" step="0.01" min="0" value={variant.precio} onChange={(e) => onUpdate(variant._key, 'precio', e.target.value)} placeholder="0.00" className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold" />
+                            <input type="number" step="0.01" min="0" value={variant.precio} onChange={(e) => onUpdate(variant._key, 'precio', e.target.value)} placeholder="0.00" className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
                             {fieldError('precio') && <p className="text-red-500 text-xs mt-0.5">{fieldError('precio')}</p>}
                         </div>
                         <div>
                             <label className="text-xs font-medium text-joya-gray block mb-1">Stock</label>
-                            <input type="number" min="0" value={variant.stock} onChange={(e) => onUpdate(variant._key, 'stock', e.target.value)} placeholder="0" className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold" />
+                            <input type="number" min="0" value={variant.stock} onChange={(e) => onUpdate(variant._key, 'stock', e.target.value)} placeholder="0" className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
                             {fieldError('stock') && <p className="text-red-500 text-xs mt-0.5">{fieldError('stock')}</p>}
                         </div>
                     </div>
@@ -347,7 +347,7 @@ function VariantCard({ variant, index, tallas, colores, errors, onUpdate, onRemo
                         <div className="flex flex-wrap gap-1.5">
                             {colores.map((color) => (
                                 <button key={color.id} type="button" onClick={() => onToggleColor(variant._key, color.id)}
-                                    className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors ${variant.colores.includes(color.id) ? 'bg-joya-black text-white border-joya-black' : 'bg-white text-joya-gray border-joya-border hover:border-joya-gold/50'}`}>
+                                    className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors ${variant.colores.includes(color.id) ? 'bg-vino text-white border-vino' : 'bg-white text-joya-gray border-joya-border hover:border-joya-gold/50'}`}>
                                     <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: color.cod_hex || '#ccc' }} />
                                     {color.color}
                                 </button>
@@ -550,10 +550,10 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
                     <div>
-                        <h1 className="text-2xl font-bold text-joya-black">Productos</h1>
+                        <h1 className="font-display text-[40px] font-normal leading-none text-tinta">Productos</h1>
                         <p className="text-joya-gray text-sm mt-1">{productos.total} producto{productos.total !== 1 ? 's' : ''} en total</p>
                     </div>
-                    <button onClick={openCreate} className="inline-flex items-center gap-2 bg-joya-black text-white px-5 py-2.5 text-sm font-medium hover:bg-joya-dark transition-colors">
+                    <button onClick={openCreate} className="inline-flex items-center gap-2 rounded-full bg-vino text-white px-5 py-2.5 text-sm font-medium hover:bg-vino-deep transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                         Nuevo Producto
                     </button>
@@ -562,11 +562,11 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                 {flash?.status && <div className="mb-6 text-sm font-medium text-green-600 bg-green-50 border border-green-200 py-3 px-4 rounded-lg">{flash.status}</div>}
 
                 <div className="mb-6">
-                    <input type="text" defaultValue={filtros.search || ''} onChange={(e) => handleSearch(e.target.value)} placeholder="Buscar productos..." className="w-full sm:max-w-sm border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold" />
+                    <input type="text" defaultValue={filtros.search || ''} onChange={(e) => handleSearch(e.target.value)} placeholder="Buscar productos..." className="w-full sm:max-w-sm border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
                 </div>
 
                 {/* Table */}
-                <div className="bg-white border border-joya-border rounded-lg overflow-hidden">
+                <div className="bg-white border border-joya-border rounded-[18px] overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -599,7 +599,7 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                             <p className="text-xs text-joya-gray">Mostrando {productos.from}\u2013{productos.to} de {productos.total}</p>
                             <div className="flex gap-1">
                                 {productos.links.map((link, i) => (
-                                    <Link key={i} href={link.url || '#'} className={`px-3 py-1 text-xs rounded transition-colors ${link.active ? 'bg-joya-black text-white' : link.url ? 'text-joya-gray hover:text-joya-black' : 'text-joya-gray/30 cursor-default'}`} preserveState preserveScroll dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    <Link key={i} href={link.url || '#'} className={`px-3 py-1 text-xs rounded transition-colors ${link.active ? 'bg-vino text-white' : link.url ? 'text-joya-gray hover:text-joya-black' : 'text-joya-gray/30 cursor-default'}`} preserveState preserveScroll dangerouslySetInnerHTML={{ __html: link.label }} />
                                 ))}
                             </div>
                         </div>
@@ -627,12 +627,12 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div>
                                         <label className="text-sm font-medium text-joya-black block mb-1.5">Nombre</label>
-                                        <input type="text" value={formData.nombre} onChange={(e) => setField('nombre', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold" autoFocus />
+                                        <input type="text" value={formData.nombre} onChange={(e) => setField('nombre', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" autoFocus />
                                         {formErrors.nombre && <p className="text-red-500 text-xs mt-1">{formErrors.nombre}</p>}
                                     </div>
                                     <div>
                                         <label className="text-sm font-medium text-joya-black block mb-1.5">Categoria</label>
-                                        <select value={formData.id_categoria} onChange={(e) => setField('id_categoria', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold">
+                                        <select value={formData.id_categoria} onChange={(e) => setField('id_categoria', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25">
                                             <option value="">Seleccionar categoria</option>
                                             {categorias.map((c) => <option key={c.id} value={c.id}>{c.categoria}</option>)}
                                         </select>
@@ -660,7 +660,7 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                                     <h4 className="text-sm font-semibold text-joya-black uppercase tracking-wider">
                                         Variantes {formData.variantes.length > 0 && <span className="text-joya-gray font-normal">({formData.variantes.length})</span>}
                                     </h4>
-                                    <button type="button" onClick={addVariant} className="inline-flex items-center gap-1.5 text-xs bg-joya-black text-white px-3 py-1.5 font-medium hover:bg-joya-dark transition-colors rounded">
+                                    <button type="button" onClick={addVariant} className="inline-flex items-center gap-1.5 text-xs bg-vino text-white px-3 py-1.5 font-medium hover:bg-vino-deep transition-colors rounded">
                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                                         Agregar variante
                                     </button>
@@ -696,7 +696,7 @@ export default function Productos({ productos, categorias, colores, tallas, tags
 
                             {/* ── Submit ── */}
                             <div className="border-t border-joya-border pt-4 flex gap-3">
-                                <button type="submit" disabled={formProcessing} className="flex-1 bg-joya-black text-white py-2.5 text-sm font-semibold uppercase tracking-wider hover:bg-joya-dark transition-colors disabled:opacity-50">
+                                <button type="submit" disabled={formProcessing} className="flex-1 rounded-full bg-vino text-white py-2.5 text-sm font-semibold uppercase tracking-wider hover:bg-vino-deep transition-colors disabled:opacity-50">
                                     {formProcessing ? 'Guardando...' : editing ? 'Actualizar Producto' : 'Crear Producto'}
                                 </button>
                                 <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 text-sm border border-joya-border text-joya-gray hover:bg-gray-50 transition-colors">Cancelar</button>
@@ -764,7 +764,7 @@ function ProductRow({ producto: p, isExpanded, onToggle, onEdit, deleteConfirm, 
                     <td colSpan={8} className="bg-gray-50/80 px-6 py-4">
                         <h4 className="text-sm font-semibold text-joya-black mb-3">Variantes de {p.nombre}</h4>
                         {p.variantes?.length > 0 ? (
-                            <div className="bg-white border border-joya-border rounded-lg overflow-hidden">
+                            <div className="bg-white border border-joya-border rounded-[18px] overflow-hidden">
                                 <table className="w-full text-xs">
                                     <thead><tr className="border-b border-joya-border bg-gray-50/50">
                                         <th className="text-left px-4 py-2 font-medium text-joya-gray uppercase tracking-wider">SKU</th>
@@ -796,7 +796,7 @@ function ProductRow({ producto: p, isExpanded, onToggle, onEdit, deleteConfirm, 
                                 </table>
                             </div>
                         ) : (
-                            <p className="text-xs text-joya-gray text-center py-4 bg-white border border-joya-border rounded-lg">Este producto no tiene variantes.</p>
+                            <p className="text-xs text-joya-gray text-center py-4 bg-white border border-joya-border rounded-[18px]">Este producto no tiene variantes.</p>
                         )}
                     </td>
                 </tr>

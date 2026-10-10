@@ -17,18 +17,18 @@ export default function AdminLayout({ children, title = 'Admin', active = '' }) 
     const [mobileOpen, setMobileOpen] = useState(false);
 
     return (
-        <div className="min-h-screen bg-joya-cream">
+        <div className="min-h-screen bg-humo text-tinta">
             <Head title={`Admin - ${title}`} />
 
-            <header className="bg-joya-black sticky top-0 z-50">
+            <header className="sticky top-0 z-50 bg-vino-deep text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         <div className="flex items-center gap-4">
                             <Link href="/" className="flex items-center gap-3">
                                 <img src="/images/logo.png" alt="Gilded" className="h-10 w-10 object-contain rounded-full" />
-                                <span className="text-white text-lg font-bold tracking-wider hidden sm:inline">GILDED</span>
+                                <span className="hidden whitespace-nowrap font-brand text-[26px] leading-none tracking-[0.06em] sm:inline">GILDED</span>
                             </Link>
-                            <span className="text-joya-gold text-xs uppercase tracking-widest border border-joya-gold/30 px-2 py-0.5 rounded">Admin</span>
+                            <span className="rounded-full border border-champan/40 px-2.5 py-0.5 text-[11px] uppercase tracking-[0.2em] text-champan">Admin</span>
                         </div>
 
                         <nav className="hidden lg:flex items-center gap-1">
@@ -36,8 +36,8 @@ export default function AdminLayout({ children, title = 'Admin', active = '' }) 
                                 <Link
                                     key={item.key}
                                     href={item.href}
-                                    className={`text-xs px-3 py-1.5 rounded transition-colors uppercase tracking-wider ${
-                                        active === item.key ? 'text-joya-gold bg-white/5' : 'text-white/60 hover:text-joya-gold'
+                                    className={`rounded-full px-3.5 py-1.5 text-[12px] uppercase tracking-[0.12em] transition-colors ${
+                                        active === item.key ? 'bg-white text-vino' : 'text-white/70 hover:bg-white/10 hover:text-white'
                                     }`}
                                 >
                                     {item.label}
@@ -46,9 +46,9 @@ export default function AdminLayout({ children, title = 'Admin', active = '' }) 
                         </nav>
 
                         <div className="flex items-center gap-3">
-                            <Link href="/" className="text-xs text-white/50 hover:text-white transition-colors hidden sm:inline">Ver tienda</Link>
-                            <div className="w-8 h-8 rounded-full bg-joya-gold/20 border border-joya-gold/40 flex items-center justify-center">
-                                <span className="text-joya-gold text-xs font-bold">{auth.user?.nombre?.charAt(0)?.toUpperCase()}</span>
+                            <Link href="/" className="hidden whitespace-nowrap rounded-full border border-white/30 px-3.5 py-1.5 text-[12px] uppercase tracking-[0.12em] text-white/80 transition-colors hover:bg-white hover:text-vino sm:inline">Ver tienda</Link>
+                            <div className="grid h-9 w-9 place-items-center rounded-full bg-rosa">
+                                <span className="text-sm font-medium text-vino">{auth.user?.nombre?.charAt(0)?.toUpperCase()}</span>
                             </div>
                             <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden text-white/70 hover:text-white">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
@@ -63,8 +63,8 @@ export default function AdminLayout({ children, title = 'Admin', active = '' }) 
                             <Link
                                 key={item.key}
                                 href={item.href}
-                                className={`block text-sm px-3 py-2 rounded transition-colors ${
-                                    active === item.key ? 'text-joya-gold bg-white/5' : 'text-white/60 hover:text-joya-gold'
+                                className={`block rounded-full px-4 py-2 text-sm transition-colors ${
+                                    active === item.key ? 'bg-white text-vino' : 'text-white/70 hover:bg-white/10 hover:text-white'
                                 }`}
                                 onClick={() => setMobileOpen(false)}
                             >
