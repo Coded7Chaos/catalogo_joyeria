@@ -1,0 +1,58 @@
+name: Deploy a Hostinger
+
+on:
+  push:
+    branches: [master]
+  # Permite lanzar el deploy a mano desde la pestaña "Actions" de GitHub.
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, curl, zip, bcmath
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependencias PHP
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Compilar assets (si usas Vite)
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      # Las rutas que empiezan con "/" solo aplican a la raíz del proyecto. Lo excluido
+      # tampoco se borra en el servidor: .env, storage (fotos subidas, logs, sesiones),
+      # el enlace public/storage y una base SQLite, si la hubiera.
+      - name: Subir archivos con rsync
+        run: |
+          rsync -az --delete \
+            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            --exclude '/.git' --exclude '/.github' --exclude '/node_modules' \
+            --exclude '/.env' --exclude '/storage' --exclude '/tests' \
+            --exclude '/public/storage' --exclude '/public/hot' \
+            --exclude '/database/database.sqlite' \
+            ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_PATH }}/
+
+      - name: Migraciones y cachés
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+          "cd ${{ secrets.REMOTE_PATH }} && php artisan migrate --force && (php artisan storage:link || true) && php artisan config:cache && php artisan route:cache && php artisan view:cache"
