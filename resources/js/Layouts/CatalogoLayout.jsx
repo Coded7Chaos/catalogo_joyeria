@@ -11,7 +11,7 @@ import {
     SearchIcon,
     TikTokIcon,
 } from '@/Components/Store/Icons';
-import { contacto } from '@/lib/catalogo';
+import { categoriaUrl, contacto } from '@/lib/catalogo';
 
 const whatsappHref = `https://wa.me/591${contacto.whatsapp[0]}`;
 
@@ -38,7 +38,7 @@ const announcements = [
 function Brand({ className = '', logoClassName = 'h-10 w-10' }) {
     return (
         <span className={`flex items-center gap-3 ${className}`}>
-            <img src="/images/logo.png" alt="" className={`shrink-0 rounded-full object-contain ${logoClassName}`} />
+            <img src="/images/logo-192.webp" alt="" className={`shrink-0 rounded-full object-contain ${logoClassName}`} />
             <span className="whitespace-nowrap font-brand leading-none tracking-[0.06em]">GILDED</span>
         </span>
     );
@@ -57,6 +57,7 @@ export default function CatalogoLayout({ children, transparentHeader = false }) 
     const [search, setSearch] = useState('');
     const { url, props } = usePage();
     const user = props.auth?.user;
+    const categoriasMenu = props.categoriasMenu ?? [];
     const userMenuRef = useRef(null);
 
     const isActive = (href) => {
@@ -249,7 +250,7 @@ export default function CatalogoLayout({ children, transparentHeader = false }) 
 
                 {/* Desktop nav */}
                 <nav className={`hidden border-t lg:block ${solid ? 'border-vino/10' : 'border-white/30'}`} aria-label="Principal">
-                    <div className="mx-auto flex h-12 max-w-[1440px] items-center gap-[49px] px-8 font-nav text-[20px] font-light leading-[normal]">
+                    <div className="mx-auto flex h-12 max-w-[1440px] items-center gap-9 px-8 font-nav text-[20px] font-light leading-[normal]">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.href}
@@ -260,6 +261,36 @@ export default function CatalogoLayout({ children, transparentHeader = false }) 
                             >
                                 {link.name}
                             </Link>
+                        ))}
+                        {categoriasMenu.map((c) => (
+                            <div key={c.id} className="group/cat relative">
+                                <Link
+                                    href={categoriaUrl(c)}
+                                    className={`relative pt-1 after:absolute after:-bottom-1 after:left-0 after:h-px after:bg-current after:transition-all hover:after:w-full ${
+                                        url.startsWith(categoriaUrl(c)) ? 'after:w-full' : 'after:w-0'
+                                    }`}
+                                >
+                                    {c.categoria}
+                                </Link>
+                                {c.hijas.length > 0 && (
+                                    <div className="invisible absolute left-1/2 top-full z-40 -translate-x-1/2 pt-3 opacity-0 transition-all group-focus-within/cat:visible group-focus-within/cat:opacity-100 group-hover/cat:visible group-hover/cat:opacity-100">
+                                        <ul className="min-w-[210px] rounded-[18px] bg-white p-2 font-sans text-sm text-tinta shadow-[0_24px_60px_-24px_rgba(83,19,30,0.45)] ring-1 ring-vino/10">
+                                            <li>
+                                                <Link href={categoriaUrl(c)} className="block rounded-xl px-4 py-2 font-medium text-vino hover:bg-rosa">
+                                                    Todo {c.categoria}
+                                                </Link>
+                                            </li>
+                                            {c.hijas.map((h) => (
+                                                <li key={h.id}>
+                                                    <Link href={categoriaUrl(h)} className="block rounded-xl px-4 py-2 hover:bg-rosa">
+                                                        {h.categoria}
+                                                    </Link>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
                         ))}
                         <a
                             href={whatsappHref}
@@ -290,6 +321,31 @@ export default function CatalogoLayout({ children, transparentHeader = false }) 
                                     >
                                         {link.name} <ChevronRight width={18} height={18} className="text-vino" />
                                     </Link>
+                                </li>
+                            ))}
+                            {categoriasMenu.map((c) => (
+                                <li key={c.id} className="py-1">
+                                    <Link
+                                        href={categoriaUrl(c)}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="flex w-full items-center justify-between py-3 font-nav text-[20px] font-light leading-[normal]"
+                                    >
+                                        {c.categoria} <ChevronRight width={18} height={18} className="text-vino" />
+                                    </Link>
+                                    {c.hijas.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 pb-3">
+                                            {c.hijas.map((h) => (
+                                                <Link
+                                                    key={h.id}
+                                                    href={categoriaUrl(h)}
+                                                    onClick={() => setMobileMenuOpen(false)}
+                                                    className="rounded-full bg-rosa px-3.5 py-1.5 text-[13px] text-vino"
+                                                >
+                                                    {h.categoria}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    )}
                                 </li>
                             ))}
                             {user ? (
@@ -354,6 +410,13 @@ export default function CatalogoLayout({ children, transparentHeader = false }) 
                                 <li key={link.href}>
                                     <Link href={link.href} className="hover:text-champan">
                                         {link.name}
+                                    </Link>
+                                </li>
+                            ))}
+                            {categoriasMenu.map((c) => (
+                                <li key={c.id}>
+                                    <Link href={categoriaUrl(c)} className="hover:text-champan">
+                                        {c.categoria}
                                     </Link>
                                 </li>
                             ))}

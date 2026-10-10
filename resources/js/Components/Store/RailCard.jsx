@@ -1,11 +1,11 @@
 import { Link } from '@inertiajs/react';
 import StoreImage from './StoreImage';
 import { EyeIcon } from './Icons';
-import { coloresDe, fotoDe, precioDe } from '@/lib/catalogo';
+import { coloresDe, fotoDe, precioDe, productoUrl } from '@/lib/catalogo';
 
 /** Product card from the "Nuevo para Amar" rail of the design. */
 export default function RailCard({ producto, badge, className = '' }) {
-    const href = `/catalogo/${producto.id}`;
+    const href = productoUrl(producto);
     const colores = coloresDe(producto).slice(0, 6);
 
     return (

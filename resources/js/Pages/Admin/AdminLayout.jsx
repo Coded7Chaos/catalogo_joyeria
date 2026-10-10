@@ -5,11 +5,11 @@ const navItems = [
     { key: 'dashboard', label: 'Dashboard', href: '/admin' },
     { key: 'productos', label: 'Productos', href: '/admin/productos' },
     { key: 'categorias', label: 'Categorias', href: '/admin/categorias' },
-    { key: 'tallas', label: 'Tallas', href: '/admin/tallas' },
-    { key: 'colores', label: 'Colores', href: '/admin/colores' },
+    { key: 'atributos', label: 'Atributos', href: '/admin/atributos' },
     { key: 'tags', label: 'Tags', href: '/admin/tags' },
     { key: 'proveedores', label: 'Proveedores', href: '/admin/proveedores' },
     { key: 'usuarios', label: 'Usuarios', href: '/admin/usuarios' },
+    { key: 'seo', label: 'SEO', href: '/admin/seo' },
 ];
 
 export default function AdminLayout({ children, title = 'Admin', active = '' }) {
@@ -25,7 +25,7 @@ export default function AdminLayout({ children, title = 'Admin', active = '' }) 
                     <div className="flex items-center justify-between h-16">
                         <div className="flex items-center gap-4">
                             <Link href="/" className="flex items-center gap-3">
-                                <img src="/images/logo.png" alt="Gilded" className="h-10 w-10 object-contain rounded-full" />
+                                <img src="/images/logo-192.webp" alt="Gilded" className="h-10 w-10 object-contain rounded-full" />
                                 <span className="hidden whitespace-nowrap font-brand text-[26px] leading-none tracking-[0.06em] sm:inline">GILDED</span>
                             </Link>
                             <span className="rounded-full border border-champan/40 px-2.5 py-0.5 text-[11px] uppercase tracking-[0.2em] text-champan">Admin</span>

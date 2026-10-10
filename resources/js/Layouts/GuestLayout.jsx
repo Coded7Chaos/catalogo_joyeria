@@ -4,7 +4,7 @@ export default function GuestLayout({ children }) {
     return (
         <div className="flex min-h-screen flex-col items-center bg-rosa px-5 py-10 text-tinta sm:justify-center">
             <Link href="/" className="flex items-center gap-3 text-vino">
-                <img src="/images/logo.png" alt="" className="h-12 w-12 rounded-full object-contain" />
+                <img src="/images/logo-192.webp" alt="" className="h-12 w-12 rounded-full object-contain" />
                 <span className="font-brand text-[34px] leading-none tracking-[0.06em]">GILDED</span>
             </Link>
 

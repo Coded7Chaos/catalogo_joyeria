@@ -17,10 +17,10 @@ export default function Dashboard({ stats, productosRecientes, usuariosRecientes
         { label: 'Categorias', value: stats.totalCategorias, href: '/admin/categorias', color: 'bg-rosa text-vino', icon: (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
         )},
-        { label: 'Tallas', value: stats.totalTallas, href: '/admin/tallas', color: 'bg-rosa text-vino', icon: (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>
+        { label: 'Atributos', value: stats.totalAtributos, href: '/admin/atributos', color: 'bg-rosa text-vino', icon: (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h10M4 18h6" /></svg>
         )},
-        { label: 'Colores', value: stats.totalColores, href: '/admin/colores', color: 'bg-rosa text-vino', icon: (
+        { label: 'Valores de atributos', value: stats.totalValores, href: '/admin/atributos', color: 'bg-rosa text-vino', icon: (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
         )},
         { label: 'Tags', value: stats.totalTags, href: '/admin/tags', color: 'bg-rosa text-vino', icon: (
@@ -148,11 +148,11 @@ export default function Dashboard({ stats, productosRecientes, usuariosRecientes
                         <Link href="/admin/categorias" className="inline-flex items-center gap-2 border border-joya-border text-joya-black px-4 py-2 text-sm font-medium hover:border-joya-gold hover:text-joya-gold transition-colors rounded">
                             Categorias
                         </Link>
-                        <Link href="/admin/colores" className="inline-flex items-center gap-2 border border-joya-border text-joya-black px-4 py-2 text-sm font-medium hover:border-joya-gold hover:text-joya-gold transition-colors rounded">
-                            Colores
+                        <Link href="/admin/atributos" className="inline-flex items-center gap-2 border border-joya-border text-joya-black px-4 py-2 text-sm font-medium hover:border-joya-gold hover:text-joya-gold transition-colors rounded">
+                            Atributos
                         </Link>
-                        <Link href="/admin/tallas" className="inline-flex items-center gap-2 border border-joya-border text-joya-black px-4 py-2 text-sm font-medium hover:border-joya-gold hover:text-joya-gold transition-colors rounded">
-                            Tallas
+                        <Link href="/admin/seo" className="inline-flex items-center gap-2 border border-joya-border text-joya-black px-4 py-2 text-sm font-medium hover:border-joya-gold hover:text-joya-gold transition-colors rounded">
+                            SEO
                         </Link>
                         <Link href="/admin/tags" className="inline-flex items-center gap-2 border border-joya-border text-joya-black px-4 py-2 text-sm font-medium hover:border-joya-gold hover:text-joya-gold transition-colors rounded">
                             Tags

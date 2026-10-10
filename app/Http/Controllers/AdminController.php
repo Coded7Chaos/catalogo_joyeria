@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Producto;
 use App\Models\Categoria;
 use App\Models\Variante;
-use App\Models\Color;
-use App\Models\Talla;
+use App\Models\Atributo;
+use App\Models\AtributoValor;
+use App\Models\Ajuste;
 use App\Models\Tag;
 use App\Models\Cliente;
 use App\Models\Proveedor;
@@ -15,6 +16,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use App\Support\ImagenOptimizada;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -29,8 +33,8 @@ class AdminController extends Controller
             'totalVariantes' => Variante::count(),
             'totalUsuarios' => Cliente::count(),
             'totalCategorias' => Categoria::count(),
-            'totalTallas' => Talla::count(),
-            'totalColores' => Color::count(),
+            'totalAtributos' => Atributo::count(),
+            'totalValores' => AtributoValor::count(),
             'totalTags' => Tag::count(),
             'totalProveedores' => Proveedor::count(),
             'productosAgotados' => Variante::where('stock', 0)->count(),
@@ -48,10 +52,17 @@ class AdminController extends Controller
     public function uploadImage(Request $request)
     {
         $request->validate([
-            'image' => 'required|image|mimes:jpg,jpeg,png,webp,gif|max:5120',
+            'image' => 'required|image|mimes:jpg,jpeg,png,webp,gif|max:10240',
         ]);
 
-        $path = $request->file('image')->store('catalogo', 'public');
+        // Photos are saved as a light WebP; if the server can't convert them, as they came.
+        $archivo = $request->file('image');
+        if ($webp = ImagenOptimizada::webp($archivo->getRealPath())) {
+            $path = 'catalogo/'.Str::random(40).'.webp';
+            Storage::disk('public')->put($path, $webp);
+        } else {
+            $path = $archivo->store('catalogo', 'public');
+        }
 
         return response()->json([
             'url' => '/storage/' . $path,
@@ -62,43 +73,85 @@ class AdminController extends Controller
 
     public function productos(Request $request)
     {
-        $productos = Producto::with(['categoria', 'variantes.talla', 'variantes.colores', 'tags'])
+        $productos = Producto::with(['categoria', 'variantes.valores.atributo', 'variantes.imagenes', 'tags'])
             ->when($request->input('search'), fn($q, $s) => $q->where('nombre', 'like', "%{$s}%"))
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
-        $categorias = Categoria::all();
-        $colores = Color::all();
-        $tallas = Talla::all();
-        $tags = Tag::all();
-
         return Inertia::render('Admin/Productos', [
             'productos' => $productos,
-            'categorias' => $categorias,
-            'colores' => $colores,
-            'tallas' => $tallas,
-            'tags' => $tags,
+            'categorias' => Categoria::orderBy('orden')->orderBy('categoria')->get(['id', 'parent_id', 'categoria']),
+            'atributos' => Atributo::with('valores')->orderBy('orden')->orderBy('nombre')->get(),
+            'tags' => Tag::all(),
             'filtros' => $request->only('search'),
         ]);
     }
 
-    public function productoStore(Request $request)
+    /** Validation shared by create/update; $prefijo is the key holding the variants. */
+    private function reglasProducto(array $prefijos, ?int $productoId = null): array
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
+        $reglas = [
+            'nombre' => 'required|string|max:150',
             'id_categoria' => 'required|exists:categorias,id',
+            'slug' => ['nullable', 'string', 'max:160', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('productos', 'slug')->ignore($productoId)],
+            'descripcion' => 'nullable|string|max:5000',
+            'meta_titulo' => 'nullable|string|max:70',
+            'meta_descripcion' => 'nullable|string|max:170',
             'tags' => 'nullable|array',
             'tags.*' => 'exists:tags,id',
-            'variantes' => 'nullable|array',
-            'variantes.*.sku' => 'nullable|string|max:50',
-            'variantes.*.id_talla' => 'nullable|exists:tallas,id',
-            'variantes.*.precio' => 'required|numeric|min:0',
-            'variantes.*.stock' => 'required|integer|min:0',
-            'variantes.*.url_foto' => 'nullable|string',
-            'variantes.*.colores' => 'nullable|array',
-            'variantes.*.colores.*' => 'exists:colors,id',
-        ]);
+        ];
+
+        foreach ($prefijos as $p) {
+            $reglas += [
+                "{$p}" => 'nullable|array',
+                "{$p}.*.sku" => 'nullable|string|max:50',
+                "{$p}.*.precio" => 'required|numeric|min:0',
+                "{$p}.*.stock" => 'required|integer|min:0',
+                "{$p}.*.valores" => 'nullable|array',
+                "{$p}.*.valores.*" => 'integer|exists:atributo_valores,id',
+                "{$p}.*.imagenes" => 'nullable|array|max:12',
+                "{$p}.*.imagenes.*.url" => 'required|string|max:2048',
+                "{$p}.*.imagenes.*.alt" => 'nullable|string|max:180',
+            ];
+        }
+
+        return $reglas;
+    }
+
+    private const MENSAJES_PRODUCTO = [
+        'slug.regex' => 'La URL solo puede tener minúsculas, números y guiones (ej: collar-luna-dorada).',
+        'slug.unique' => 'Ya hay otro producto con esa URL.',
+    ];
+
+    /** A variant can hold one value per attribute (one color, one size…). */
+    private function validarValoresPorAtributo(array $variantes): void
+    {
+        $valorAtributo = AtributoValor::pluck('id_atributo', 'id');
+        foreach ($variantes as $v) {
+            $atributos = collect($v['valores'] ?? [])->map(fn ($id) => $valorAtributo[$id] ?? null)->filter();
+            if ($atributos->count() !== $atributos->unique()->count()) {
+                throw ValidationException::withMessages(['variantes' => 'Cada variante puede tener un solo valor por atributo (por ejemplo, un solo color).']);
+            }
+        }
+    }
+
+    private function guardarVariante(Producto $producto, array $vData, ?Variante $variante = null): void
+    {
+        $datos = [
+            'sku' => $vData['sku'] ?? null,
+            'precio' => $vData['precio'],
+            'stock' => $vData['stock'],
+        ];
+
+        $variante = $variante ? tap($variante)->update($datos) : $producto->variantes()->create($datos);
+        $variante->valores()->sync($vData['valores'] ?? []);
+        $variante->guardarImagenes($vData['imagenes'] ?? []);
+    }
+
+    public function productoStore(Request $request)
+    {
+        $request->validate($this->reglasProducto(['variantes']), self::MENSAJES_PRODUCTO);
 
         // Validate SKU uniqueness across submitted variants and existing DB records
         $variantes = $request->input('variantes', []);
@@ -112,63 +165,31 @@ class AdminController extends Controller
                 throw ValidationException::withMessages(['variantes' => 'Uno o más SKUs ya existen en la base de datos.']);
             }
         }
+        $this->validarValoresPorAtributo($variantes);
 
-        DB::beginTransaction();
-        try {
-            $producto = Producto::create($request->only('nombre', 'id_categoria'));
+        DB::transaction(function () use ($request, $variantes) {
+            $producto = Producto::create($request->only('nombre', 'id_categoria', 'slug', 'descripcion', 'meta_titulo', 'meta_descripcion'));
             $producto->tags()->sync($request->input('tags', []));
 
             foreach ($variantes as $vData) {
-                $variante = $producto->variantes()->create([
-                    'sku' => $vData['sku'] ?? null,
-                    'id_talla' => $vData['id_talla'] ?: null,
-                    'precio' => $vData['precio'],
-                    'stock' => $vData['stock'],
-                    'url_foto' => $vData['url_foto'] ?? null,
-                ]);
-                if (!empty($vData['colores'])) {
-                    $variante->colores()->sync($vData['colores']);
-                }
+                $this->guardarVariante($producto, $vData);
             }
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
 
         return back()->with('status', 'Producto creado correctamente.');
     }
 
     public function productoUpdate(Request $request, string $id)
     {
+        $producto = Producto::findOrFail($id);
+
         $request->validate([
-            'nombre' => 'required|string|max:255',
-            'id_categoria' => 'required|exists:categorias,id',
-            'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id',
-            'variantes_new' => 'nullable|array',
-            'variantes_new.*.sku' => 'nullable|string|max:50',
-            'variantes_new.*.id_talla' => 'nullable|exists:tallas,id',
-            'variantes_new.*.precio' => 'required|numeric|min:0',
-            'variantes_new.*.stock' => 'required|integer|min:0',
-            'variantes_new.*.url_foto' => 'nullable|string',
-            'variantes_new.*.colores' => 'nullable|array',
-            'variantes_new.*.colores.*' => 'exists:colors,id',
-            'variantes_update' => 'nullable|array',
+            ...$this->reglasProducto(['variantes_new', 'variantes_update'], $producto->id),
             'variantes_update.*.id' => 'required|exists:variantes,id',
-            'variantes_update.*.sku' => 'nullable|string|max:50',
-            'variantes_update.*.id_talla' => 'nullable|exists:tallas,id',
-            'variantes_update.*.precio' => 'required|numeric|min:0',
-            'variantes_update.*.stock' => 'required|integer|min:0',
-            'variantes_update.*.url_foto' => 'nullable|string',
-            'variantes_update.*.colores' => 'nullable|array',
-            'variantes_update.*.colores.*' => 'exists:colors,id',
             'variantes_delete' => 'nullable|array',
             'variantes_delete.*' => 'integer',
-        ]);
+        ], self::MENSAJES_PRODUCTO);
 
-        $producto = Producto::findOrFail($id);
         $variantesNew = $request->input('variantes_new', []);
         $variantesUpdate = $request->input('variantes_update', []);
         $variantesDelete = $request->input('variantes_delete', []);
@@ -192,53 +213,29 @@ class AdminController extends Controller
                 throw ValidationException::withMessages(['variantes' => 'Uno o más SKUs ya existen en la base de datos.']);
             }
         }
+        $this->validarValoresPorAtributo([...$variantesUpdate, ...$variantesNew]);
 
-        DB::beginTransaction();
-        try {
-            $producto->update($request->only('nombre', 'id_categoria'));
+        DB::transaction(function () use ($request, $producto, $variantesNew, $variantesUpdate, $variantesDelete) {
+            $producto->update($request->only('nombre', 'id_categoria', 'slug', 'descripcion', 'meta_titulo', 'meta_descripcion'));
             $producto->tags()->sync($request->input('tags', []));
 
-            // Delete
             if (!empty($variantesDelete)) {
                 Variante::whereIn('id', $variantesDelete)
                     ->where('id_producto', $producto->id)
                     ->each(fn($v) => $v->delete());
             }
 
-            // Update existing
             foreach ($variantesUpdate as $vData) {
                 $variante = Variante::where('id', $vData['id'])
                     ->where('id_producto', $producto->id)
                     ->firstOrFail();
-                $variante->update([
-                    'sku' => $vData['sku'] ?? null,
-                    'id_talla' => $vData['id_talla'] ?: null,
-                    'precio' => $vData['precio'],
-                    'stock' => $vData['stock'],
-                    'url_foto' => $vData['url_foto'] ?? null,
-                ]);
-                $variante->colores()->sync($vData['colores'] ?? []);
+                $this->guardarVariante($producto, $vData, $variante);
             }
 
-            // Create new
             foreach ($variantesNew as $vData) {
-                $variante = $producto->variantes()->create([
-                    'sku' => $vData['sku'] ?? null,
-                    'id_talla' => $vData['id_talla'] ?: null,
-                    'precio' => $vData['precio'],
-                    'stock' => $vData['stock'],
-                    'url_foto' => $vData['url_foto'] ?? null,
-                ]);
-                if (!empty($vData['colores'])) {
-                    $variante->colores()->sync($vData['colores']);
-                }
+                $this->guardarVariante($producto, $vData);
             }
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
 
         return back()->with('status', 'Producto actualizado correctamente.');
     }
@@ -252,24 +249,27 @@ class AdminController extends Controller
 
     // ── Variantes ──
 
-    public function varianteStore(Request $request, string $id)
+    private function reglasVariante(?int $varianteId = null): array
     {
-        $request->validate([
-            'sku' => 'nullable|string|max:50|unique:variantes,sku',
-            'id_talla' => 'nullable|exists:tallas,id',
+        return [
+            'sku' => ['nullable', 'string', 'max:50', Rule::unique('variantes', 'sku')->ignore($varianteId)],
             'precio' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
-            'url_foto' => 'nullable|string',
-            'colores' => 'nullable|array',
-            'colores.*' => 'exists:colors,id',
-        ]);
+            'valores' => 'nullable|array',
+            'valores.*' => 'integer|exists:atributo_valores,id',
+            'imagenes' => 'nullable|array|max:12',
+            'imagenes.*.url' => 'required|string|max:2048',
+            'imagenes.*.alt' => 'nullable|string|max:180',
+        ];
+    }
+
+    public function varianteStore(Request $request, string $id)
+    {
+        $request->validate($this->reglasVariante());
+        $this->validarValoresPorAtributo([$request->all()]);
 
         $producto = Producto::findOrFail($id);
-        $variante = $producto->variantes()->create($request->only('sku', 'id_talla', 'precio', 'stock', 'url_foto'));
-
-        if ($request->has('colores')) {
-            $variante->colores()->sync($request->input('colores', []));
-        }
+        DB::transaction(fn () => $this->guardarVariante($producto, $request->all()));
 
         return back()->with('status', 'Variante creada correctamente.');
     }
@@ -278,18 +278,10 @@ class AdminController extends Controller
     {
         $variante = Variante::findOrFail($id);
 
-        $request->validate([
-            'sku' => 'nullable|string|max:50|unique:variantes,sku,' . $variante->id,
-            'id_talla' => 'nullable|exists:tallas,id',
-            'precio' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'url_foto' => 'nullable|string',
-            'colores' => 'nullable|array',
-            'colores.*' => 'exists:colors,id',
-        ]);
+        $request->validate($this->reglasVariante($variante->id));
+        $this->validarValoresPorAtributo([$request->all()]);
 
-        $variante->update($request->only('sku', 'id_talla', 'precio', 'stock', 'url_foto'));
-        $variante->colores()->sync($request->input('colores', []));
+        DB::transaction(fn () => $this->guardarVariante($variante->producto, $request->all(), $variante));
 
         return back()->with('status', 'Variante actualizada correctamente.');
     }
@@ -348,11 +340,12 @@ class AdminController extends Controller
 
     public function categorias(Request $request)
     {
-        $categorias = Categoria::withCount('productos')
+        // All of them (no paging): the page shows the tree of categories and subcategories.
+        $categorias = Categoria::withCount(['productos', 'hijas'])
             ->when($request->input('search'), fn($q, $s) => $q->where('categoria', 'like', "%{$s}%"))
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->orderBy('orden')
+            ->orderBy('categoria')
+            ->get();
 
         return Inertia::render('Admin/Categorias', [
             'categorias' => $categorias,
@@ -360,13 +353,55 @@ class AdminController extends Controller
         ]);
     }
 
+    private function reglasCategoria(Request $request, ?Categoria $categoria = null): array
+    {
+        $padre = $request->input('parent_id') ?: null;
+
+        return [
+            // The same name can repeat under different parents ("Plata" in Anillos and in Collares).
+            'categoria' => [
+                'required', 'string', 'max:150',
+                Rule::unique('categorias', 'categoria')
+                    ->where(fn ($q) => $padre ? $q->where('parent_id', $padre) : $q->whereNull('parent_id'))
+                    ->ignore($categoria?->id),
+            ],
+            'parent_id' => [
+                'nullable', 'integer', 'exists:categorias,id',
+                function ($attr, $valor, $fail) use ($categoria) {
+                    if ($categoria && $valor && in_array((int) $valor, Categoria::idsConDescendientes($categoria->id), true)) {
+                        $fail('Una categoría no puede estar dentro de sí misma ni de sus subcategorías.');
+                    }
+                },
+            ],
+            'slug' => ['nullable', 'string', 'max:160', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/', Rule::unique('categorias', 'slug')->ignore($categoria?->id)],
+            'descripcion' => 'nullable|string|max:5000',
+            'imagen' => 'nullable|string|max:2048',
+            'orden' => 'nullable|integer|min:0|max:9999',
+            'meta_titulo' => 'nullable|string|max:70',
+            'meta_descripcion' => 'nullable|string|max:170',
+        ];
+    }
+
+    private const MENSAJES_CATEGORIA = [
+        'categoria.unique' => 'Ya existe una categoría con ese nombre en el mismo nivel.',
+        'slug.regex' => 'La URL solo puede tener minúsculas, números y guiones (ej: anillos-de-plata).',
+        'slug.unique' => 'Ya hay otra categoría con esa URL.',
+    ];
+
+    private function datosCategoria(Request $request): array
+    {
+        return [
+            ...$request->only('categoria', 'slug', 'descripcion', 'imagen', 'meta_titulo', 'meta_descripcion'),
+            'parent_id' => $request->input('parent_id') ?: null,
+            'orden' => (int) $request->input('orden', 0),
+        ];
+    }
+
     public function categoriaStore(Request $request)
     {
-        $request->validate([
-            'categoria' => 'required|string|max:150|unique:categorias,categoria',
-        ]);
+        $request->validate($this->reglasCategoria($request), self::MENSAJES_CATEGORIA);
 
-        Categoria::create($request->only('categoria'));
+        Categoria::create($this->datosCategoria($request));
 
         return back()->with('status', 'Categoria creada correctamente.');
     }
@@ -375,21 +410,22 @@ class AdminController extends Controller
     {
         $categoria = Categoria::findOrFail($id);
 
-        $request->validate([
-            'categoria' => 'required|string|max:150|unique:categorias,categoria,' . $categoria->id,
-        ]);
+        $request->validate($this->reglasCategoria($request, $categoria), self::MENSAJES_CATEGORIA);
 
-        $categoria->update($request->only('categoria'));
+        $categoria->update($this->datosCategoria($request));
 
         return back()->with('status', 'Categoria actualizada correctamente.');
     }
 
     public function categoriaDestroy(string $id)
     {
-        $categoria = Categoria::withCount('productos')->findOrFail($id);
+        $categoria = Categoria::withCount(['productos', 'hijas'])->findOrFail($id);
 
         if ($categoria->productos_count > 0) {
             return back()->withErrors(['error' => 'No puedes eliminar una categoria con productos asociados.']);
+        }
+        if ($categoria->hijas_count > 0) {
+            return back()->withErrors(['error' => 'Primero elimina o mueve sus subcategorías.']);
         }
 
         $categoria->delete();
@@ -397,112 +433,164 @@ class AdminController extends Controller
         return back()->with('status', 'Categoria eliminada correctamente.');
     }
 
-    // ── Tallas ──
+    // ── Atributos (Talla, Color, Material…) ──
 
-    public function tallas(Request $request)
+    public function atributos()
     {
-        $tallas = Talla::withCount('variantes')
-            ->when($request->input('search'), fn($q, $s) => $q->where('talla', 'like', "%{$s}%"))
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+        $atributos = Atributo::with(['valores' => fn ($q) => $q->withCount('variantes')])
+            ->orderBy('orden')
+            ->orderBy('nombre')
+            ->get();
 
-        return Inertia::render('Admin/Tallas', [
-            'tallas' => $tallas,
-            'filtros' => $request->only('search'),
-        ]);
+        return Inertia::render('Admin/Atributos', ['atributos' => $atributos]);
     }
 
-    public function tallaStore(Request $request)
+    private function reglasAtributo(?Atributo $atributo = null): array
     {
-        $request->validate([
-            'talla' => 'required|string|max:50|unique:tallas,talla',
-        ]);
-
-        Talla::create($request->only('talla'));
-
-        return back()->with('status', 'Talla creada correctamente.');
+        return [
+            'nombre' => ['required', 'string', 'max:80', Rule::unique('atributos', 'nombre')->ignore($atributo?->id)],
+            'tipo' => 'required|in:texto,color',
+            'filtrable' => 'boolean',
+            'orden' => 'nullable|integer|min:0|max:9999',
+        ];
     }
 
-    public function tallaUpdate(Request $request, string $id)
+    public function atributoStore(Request $request)
     {
-        $talla = Talla::findOrFail($id);
+        $request->validate($this->reglasAtributo());
 
-        $request->validate([
-            'talla' => 'required|string|max:50|unique:tallas,talla,' . $talla->id,
+        Atributo::create([
+            ...$request->only('nombre', 'tipo'),
+            'filtrable' => $request->boolean('filtrable', true),
+            'orden' => (int) $request->input('orden', 0),
         ]);
 
-        $talla->update($request->only('talla'));
-
-        return back()->with('status', 'Talla actualizada correctamente.');
+        return back()->with('status', 'Atributo creado correctamente.');
     }
 
-    public function tallaDestroy(string $id)
+    public function atributoUpdate(Request $request, string $id)
     {
-        $talla = Talla::withCount('variantes')->findOrFail($id);
+        $atributo = Atributo::findOrFail($id);
+        $request->validate($this->reglasAtributo($atributo));
 
-        if ($talla->variantes_count > 0) {
-            return back()->withErrors(['error' => 'No puedes eliminar una talla con variantes asociadas.']);
+        $atributo->update([
+            ...$request->only('nombre', 'tipo'),
+            'filtrable' => $request->boolean('filtrable'),
+            'orden' => (int) $request->input('orden', 0),
+        ]);
+
+        return back()->with('status', 'Atributo actualizado correctamente.');
+    }
+
+    public function atributoDestroy(string $id)
+    {
+        $atributo = Atributo::findOrFail($id);
+
+        if (AtributoValor::where('id_atributo', $atributo->id)->whereHas('variantes')->exists()) {
+            return back()->withErrors(['error' => "No puedes eliminar \"{$atributo->nombre}\": hay variantes que lo usan."]);
         }
 
-        $talla->delete();
+        $atributo->delete();
 
-        return back()->with('status', 'Talla eliminada correctamente.');
+        return back()->with('status', 'Atributo eliminado correctamente.');
     }
 
-    // ── Colores ──
-
-    public function colores(Request $request)
+    private function reglasValor(int $atributoId, ?AtributoValor $valor = null): array
     {
-        $colores = Color::withCount('variantes')
-            ->when($request->input('search'), fn($q, $s) => $q->where('color', 'like', "%{$s}%"))
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
-
-        return Inertia::render('Admin/Colores', [
-            'colores' => $colores,
-            'filtros' => $request->only('search'),
-        ]);
+        return [
+            'valor' => [
+                'required', 'string', 'max:80',
+                Rule::unique('atributo_valores', 'valor')->where('id_atributo', $atributoId)->ignore($valor?->id),
+            ],
+            'cod_hex' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'orden' => 'nullable|integer|min:0|max:9999',
+        ];
     }
 
-    public function colorStore(Request $request)
+    public function valorStore(Request $request, string $id)
     {
-        $request->validate([
-            'color' => 'required|string|max:50',
-            'cod_hex' => 'nullable|string|max:50',
-            'tipo' => 'required|string|max:50',
-        ]);
+        $atributo = Atributo::findOrFail($id);
+        $request->validate($this->reglasValor($atributo->id), ['valor.unique' => 'Ese valor ya existe en este atributo.']);
 
-        $color = Color::create($request->only('color', 'cod_hex', 'tipo'));
-
-        return back()->with('status', 'Color creado correctamente.');
-    }
-
-    public function colorUpdate(Request $request, string $id)
-    {
-        $request->validate([
-            'color' => 'required|string|max:50',
-            'cod_hex' => 'nullable|string|max:50',
-            'tipo' => 'required|string|max:50',
+        $atributo->valores()->create([
+            'valor' => $request->input('valor'),
+            'cod_hex' => $request->input('cod_hex'),
+            'orden' => (int) $request->input('orden', $atributo->valores()->count()),
         ]);
 
-        Color::findOrFail($id)->update($request->only('color', 'cod_hex', 'tipo'));
-
-        return back()->with('status', 'Color actualizado correctamente.');
+        return back()->with('status', 'Valor agregado correctamente.');
     }
 
-    public function colorDestroy(string $id)
+    public function valorUpdate(Request $request, string $id)
     {
-        $color = Color::withCount('variantes')->findOrFail($id);
+        $valor = AtributoValor::findOrFail($id);
+        $request->validate($this->reglasValor($valor->id_atributo, $valor), ['valor.unique' => 'Ese valor ya existe en este atributo.']);
 
-        if ($color->variantes_count > 0) {
-            return back()->withErrors(['error' => 'No puedes eliminar un color con variantes asociadas.']);
+        $valor->update([
+            'valor' => $request->input('valor'),
+            'cod_hex' => $request->input('cod_hex'),
+            'orden' => (int) $request->input('orden', $valor->orden),
+        ]);
+
+        return back()->with('status', 'Valor actualizado correctamente.');
+    }
+
+    public function valorDestroy(string $id)
+    {
+        $valor = AtributoValor::withCount('variantes')->findOrFail($id);
+
+        if ($valor->variantes_count > 0) {
+            return back()->withErrors(['error' => "No puedes eliminar \"{$valor->valor}\": hay variantes que lo usan."]);
         }
 
-        $color->delete();
+        $valor->delete();
 
-        return back()->with('status', 'Color eliminado correctamente.');
+        return back()->with('status', 'Valor eliminado correctamente.');
+    }
+
+    // ── SEO ──
+
+    private const AJUSTES_SEO = ['seo_nombre_sitio', 'seo_titulo_inicio', 'seo_descripcion', 'seo_imagen', 'seo_google_verificacion'];
+
+    public function seo()
+    {
+        $ajustes = collect(self::AJUSTES_SEO)->mapWithKeys(fn ($clave) => [$clave => Ajuste::get($clave, '')])->all();
+
+        return Inertia::render('Admin/Seo', [
+            'ajustes' => $ajustes,
+            'porDefecto' => [
+                'seo_nombre_sitio' => config('seo.nombre_sitio'),
+                'seo_titulo_inicio' => config('seo.nombre_sitio').' | '.config('seo.lema'),
+                'seo_descripcion' => config('seo.descripcion'),
+            ],
+            'urls' => [
+                'sitio' => url('/'),
+                'sitemap' => url('/sitemap.xml'),
+                'robots' => url('/robots.txt'),
+            ],
+            'estadisticas' => [
+                'productosSinDescripcion' => Producto::where(fn ($q) => $q->whereNull('descripcion')->orWhere('descripcion', ''))->count(),
+                'productosSinFoto' => Producto::whereDoesntHave('variantes', fn ($q) => $q->whereNotNull('url_foto')->where('url_foto', '!=', ''))->count(),
+                'categoriasSinDescripcion' => Categoria::where(fn ($q) => $q->whereNull('descripcion')->orWhere('descripcion', ''))->count(),
+            ],
+        ]);
+    }
+
+    public function seoUpdate(Request $request)
+    {
+        $request->validate([
+            'seo_nombre_sitio' => 'nullable|string|max:60',
+            'seo_titulo_inicio' => 'nullable|string|max:70',
+            'seo_descripcion' => 'nullable|string|max:170',
+            'seo_imagen' => 'nullable|string|max:2048',
+            // Only the code from Search Console's "HTML tag" method (content="…").
+            'seo_google_verificacion' => ['nullable', 'string', 'max:100', 'regex:/^[A-Za-z0-9_\-]+$/'],
+        ], ['seo_google_verificacion.regex' => 'Pega solo el código que aparece dentro de content="…".']);
+
+        Ajuste::guardar($request->only(self::AJUSTES_SEO));
+        \Illuminate\Support\Facades\Cache::forget('sitemap');
+
+        return back()->with('status', 'Ajustes de SEO guardados.');
     }
 
     // ── Tags ──

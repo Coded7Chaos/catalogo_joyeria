@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import StoreImage from './StoreImage';
 import { ArrowUpRight, HeartIcon } from './Icons';
-import { assets, coloresDe, fotoDe, precioDe, ratioFor } from '@/lib/catalogo';
+import { assets, coloresDe, fotoDe, precioDe, productoUrl, ratioFor } from '@/lib/catalogo';
 
 export function ProductTile({ producto, categoria, active, saved, canHover, onActivate, onSave }) {
     const precio = precioDe(producto);
@@ -22,7 +22,7 @@ export function ProductTile({ producto, categoria, active, saved, canHover, onAc
             style={{ aspectRatio: ratioFor(producto.id) }}
         >
             <Link
-                href={`/catalogo/${producto.id}`}
+                href={productoUrl(producto)}
                 onClick={handleClick}
                 aria-label={`${producto.nombre}, ${precio}`}
                 className="absolute inset-0 block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-vino"

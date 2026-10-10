@@ -2,99 +2,27 @@ import { Head, Link, usePage, router } from '@inertiajs/react';
 import { useState, useRef, useCallback } from 'react';
 import AdminLayout from './AdminLayout';
 import axios from 'axios';
+import { GaleriaImagenes } from '@/Components/Admin/Imagenes';
+import CamposSeo from '@/Components/Admin/CamposSeo';
 
-function ImageDropZone({ value, onChange, className = '' }) {
-    const [dragging, setDragging] = useState(false);
-    const [uploading, setUploading] = useState(false);
-    const inputRef = useRef(null);
-
-    const upload = useCallback(async (file) => {
-        if (!file || !file.type.startsWith('image/')) return;
-        setUploading(true);
-        try {
-            const fd = new FormData();
-            fd.append('image', file);
-            const { data } = await axios.post('/admin/upload-image', fd);
-            onChange(data.url);
-        } catch {
-            alert('Error al subir imagen');
-        } finally {
-            setUploading(false);
-        }
-    }, [onChange]);
-
-    const handleDrop = useCallback((e) => {
-        e.preventDefault();
-        setDragging(false);
-        const file = e.dataTransfer.files?.[0];
-        if (file) upload(file);
-    }, [upload]);
-
-    const handleDragOver = useCallback((e) => { e.preventDefault(); setDragging(true); }, []);
-    const handleDragLeave = useCallback(() => setDragging(false), []);
-
-    return (
-        <div
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onClick={() => inputRef.current?.click()}
-            className={`relative border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                dragging ? 'border-joya-gold bg-joya-gold/5' : 'border-joya-border hover:border-joya-gold/50'
-            } ${className}`}
-        >
-            <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => { if (e.target.files?.[0]) upload(e.target.files[0]); }}
-            />
-            {uploading ? (
-                <div className="flex items-center justify-center py-6">
-                    <div className="w-5 h-5 border-2 border-joya-gold border-t-transparent rounded-full animate-spin" />
-                    <span className="ml-2 text-xs text-joya-gray">Subiendo...</span>
-                </div>
-            ) : value ? (
-                <div className="relative group">
-                    <img src={value} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                        <span className="text-white text-xs">Click o arrastra para cambiar</span>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); onChange(''); }}
-                        className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                        x
-                    </button>
-                </div>
-            ) : (
-                <div className="flex flex-col items-center justify-center py-6 text-joya-gray">
-                    <svg className="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    <span className="text-xs">Arrastra una imagen o haz click</span>
-                </div>
-            )}
-        </div>
-    );
-}
-
-function InlineColorForm({ onCreated }) {
+/** Creates a new value for an attribute (e.g. a new color or size) without leaving the form. */
+function InlineValorForm({ atributo, onCreated }) {
     const [open, setOpen] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [data, setData] = useState({ color: '', cod_hex: '#000000', tipo: 'solido' });
+    const [data, setData] = useState({ valor: '', cod_hex: '#c9a46a' });
+    const esColor = atributo.tipo === 'color';
 
     const submit = async (e) => {
         e.preventDefault();
         e.stopPropagation();
         setSaving(true);
         try {
-            await axios.post('/admin/colores', data);
-            setData({ color: '', cod_hex: '#000000', tipo: 'solido' });
+            await axios.post(`/admin/atributos/${atributo.id}/valores`, { valor: data.valor, cod_hex: esColor ? data.cod_hex : null });
+            setData({ valor: '', cod_hex: '#c9a46a' });
             setOpen(false);
             onCreated();
         } catch (err) {
-            alert(err.response?.data?.message || 'Error al crear color');
+            alert(err.response?.data?.message || 'Error al crear el valor');
         } finally {
             setSaving(false);
         }
@@ -102,58 +30,21 @@ function InlineColorForm({ onCreated }) {
 
     if (!open) {
         return (
-            <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="inline-flex items-center gap-1 text-xs text-joya-gold hover:text-joya-gold-hover transition-colors mt-1"
-            >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                Nuevo color
+            <button type="button" onClick={() => setOpen(true)} className="mt-1 inline-flex items-center gap-1 text-xs text-joya-gold transition-colors hover:text-joya-gold-hover">
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                Nuevo valor
             </button>
         );
     }
 
     return (
-        <div className="mt-2 p-3 border border-joya-border rounded-lg bg-gray-50 space-y-2" onClick={(e) => e.stopPropagation()}>
-            <p className="text-xs font-medium text-joya-black">Crear color</p>
-            <div className="flex gap-2">
-                <input
-                    type="text"
-                    value={data.color}
-                    onChange={(e) => setData({ ...data, color: e.target.value })}
-                    placeholder="Nombre"
-                    className="flex-1 border border-joya-border rounded px-2 py-1 text-xs focus:border-vino focus:ring-1 focus:ring-vino/25"
-                />
-                <input
-                    type="color"
-                    value={data.cod_hex}
-                    onChange={(e) => setData({ ...data, cod_hex: e.target.value })}
-                    className="w-8 h-8 rounded border border-joya-border cursor-pointer p-0"
-                />
-            </div>
-            <select
-                value={data.tipo}
-                onChange={(e) => setData({ ...data, tipo: e.target.value })}
-                className="w-full border border-joya-border rounded px-2 py-1 text-xs focus:border-vino focus:ring-1 focus:ring-vino/25"
-            >
-                <option value="solido">Solido</option>
-                <option value="metalico">Metalico</option>
-                <option value="mate">Mate</option>
-                <option value="brillante">Brillante</option>
-            </select>
-            <div className="flex gap-2">
-                <button
-                    type="button"
-                    onClick={submit}
-                    disabled={!data.color || saving}
-                    className="text-xs bg-vino text-white px-3 py-1 rounded hover:bg-vino-deep disabled:opacity-50"
-                >
-                    {saving ? 'Creando...' : 'Crear'}
-                </button>
-                <button type="button" onClick={() => setOpen(false)} className="text-xs text-joya-gray hover:text-joya-black">
-                    Cancelar
-                </button>
-            </div>
+        <div className="mt-2 flex items-center gap-2 rounded-lg border border-joya-border bg-gray-50 p-2" onClick={(e) => e.stopPropagation()}>
+            <input type="text" value={data.valor} onChange={(e) => setData({ ...data, valor: e.target.value })} placeholder={`Nuevo ${atributo.nombre.toLowerCase()}`} className="min-w-0 flex-1 rounded border border-joya-border px-2 py-1 text-xs focus:border-vino focus:ring-1 focus:ring-vino/25" autoFocus />
+            {esColor && <input type="color" value={data.cod_hex} onChange={(e) => setData({ ...data, cod_hex: e.target.value })} className="h-7 w-7 cursor-pointer rounded border border-joya-border p-0" />}
+            <button type="button" onClick={submit} disabled={!data.valor || saving} className="rounded bg-vino px-2.5 py-1 text-xs text-white hover:bg-vino-deep disabled:opacity-50">
+                {saving ? '…' : 'Crear'}
+            </button>
+            <button type="button" onClick={() => setOpen(false)} className="text-xs text-joya-gray hover:text-joya-black">×</button>
         </div>
     );
 }
@@ -219,144 +110,87 @@ function InlineTagForm({ onCreated }) {
     );
 }
 
-function InlineTallaForm({ onCreated }) {
-    const [open, setOpen] = useState(false);
-    const [saving, setSaving] = useState(false);
-    const [talla, setTalla] = useState('');
-
-    const submit = async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setSaving(true);
-        try {
-            await axios.post('/admin/tallas', { talla });
-            setTalla('');
-            setOpen(false);
-            onCreated();
-        } catch (err) {
-            alert(err.response?.data?.message || 'Error al crear talla');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    if (!open) {
-        return (
-            <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="inline-flex items-center gap-1 text-xs text-joya-gold hover:text-joya-gold-hover transition-colors mt-1"
-            >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                Nueva talla
-            </button>
-        );
-    }
-
-    return (
-        <div className="mt-2 p-3 border border-joya-border rounded-lg bg-gray-50 space-y-2" onClick={(e) => e.stopPropagation()}>
-            <p className="text-xs font-medium text-joya-black">Crear talla</p>
-            <input
-                type="text"
-                value={talla}
-                onChange={(e) => setTalla(e.target.value)}
-                placeholder="Ej: S, M, L, 7, 8..."
-                className="w-full border border-joya-border rounded px-2 py-1 text-xs focus:border-vino focus:ring-1 focus:ring-vino/25"
-            />
-            <div className="flex gap-2">
-                <button
-                    type="button"
-                    onClick={submit}
-                    disabled={!talla || saving}
-                    className="text-xs bg-vino text-white px-3 py-1 rounded hover:bg-vino-deep disabled:opacity-50"
-                >
-                    {saving ? 'Creando...' : 'Crear'}
-                </button>
-                <button type="button" onClick={() => setOpen(false)} className="text-xs text-joya-gray hover:text-joya-black">
-                    Cancelar
-                </button>
-            </div>
-        </div>
-    );
-}
-
-function VariantCard({ variant, index, tallas, colores, errors, onUpdate, onRemove, onToggleColor, onReloadColors, onReloadTallas }) {
+function VariantCard({ variant, index, atributos, errors, onUpdate, onRemove, onSetValor, onReloadAtributos }) {
     const [confirmDelete, setConfirmDelete] = useState(false);
-
-    const fieldError = (field) => {
-        // Errors come mapped as variantes.0.precio, variantes_new.0.precio, variantes_update.0.precio
-        // We receive pre-mapped errors for this variant's index
-        return errors?.[field];
-    };
+    const fieldError = (field) => errors?.[field];
+    const errorFotos = Object.entries(errors || {}).find(([k]) => k.startsWith('imagenes'))?.[1];
 
     return (
-        <div className="border border-joya-border rounded-lg p-4 bg-white">
-            <div className="flex items-start justify-between mb-3">
-                <h4 className="text-sm font-medium text-joya-black">Variante {index + 1} {variant.id ? <span className="text-xs text-joya-gray font-normal">(ID: {variant.id})</span> : <span className="text-xs text-green-600 font-normal">(Nueva)</span>}</h4>
+        <div className="rounded-[18px] border border-joya-border bg-white p-4">
+            <div className="mb-3 flex items-start justify-between">
+                <h4 className="text-sm font-medium text-joya-black">Variante {index + 1} {variant.id ? <span className="text-xs font-normal text-joya-gray">(ID: {variant.id})</span> : <span className="text-xs font-normal text-green-600">(Nueva)</span>}</h4>
                 {confirmDelete ? (
                     <div className="flex items-center gap-1">
-                        <span className="text-xs text-red-600 mr-1">Eliminar?</span>
-                        <button type="button" onClick={() => { onRemove(variant._key); setConfirmDelete(false); }} className="text-xs bg-red-500 text-white px-2 py-0.5 rounded hover:bg-red-600">Si</button>
-                        <button type="button" onClick={() => setConfirmDelete(false)} className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded hover:bg-gray-300">No</button>
+                        <span className="mr-1 text-xs text-red-600">Eliminar?</span>
+                        <button type="button" onClick={() => { onRemove(variant._key); setConfirmDelete(false); }} className="rounded bg-red-500 px-2 py-0.5 text-xs text-white hover:bg-red-600">Si</button>
+                        <button type="button" onClick={() => setConfirmDelete(false)} className="rounded bg-gray-200 px-2 py-0.5 text-xs text-gray-600 hover:bg-gray-300">No</button>
                     </div>
                 ) : (
-                    <button type="button" onClick={() => setConfirmDelete(true)} className="text-joya-gray hover:text-red-500 transition-colors p-1" title="Eliminar variante">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    <button type="button" onClick={() => setConfirmDelete(true)} className="p-1 text-joya-gray transition-colors hover:text-red-500" title="Eliminar variante">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                 )}
             </div>
 
-            <div className="flex gap-4">
-                {/* Image */}
-                <div className="w-32 flex-shrink-0">
-                    <ImageDropZone value={variant.url_foto} onChange={(url) => onUpdate(variant._key, 'url_foto', url)} className="h-full min-h-[100px]" />
+            <div className="grid grid-cols-3 gap-3">
+                <div>
+                    <label className="mb-1 block text-xs font-medium text-joya-gray">SKU</label>
+                    <input type="text" value={variant.sku} onChange={(e) => onUpdate(variant._key, 'sku', e.target.value)} placeholder="SKU-001" className="w-full rounded border border-joya-border px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
+                    {fieldError('sku') && <p className="mt-0.5 text-xs text-red-500">{fieldError('sku')}</p>}
                 </div>
-
-                {/* Fields */}
-                <div className="flex-1 space-y-3">
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div>
-                            <label className="text-xs font-medium text-joya-gray block mb-1">SKU</label>
-                            <input type="text" value={variant.sku} onChange={(e) => onUpdate(variant._key, 'sku', e.target.value)} placeholder="SKU-001" className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
-                            {fieldError('sku') && <p className="text-red-500 text-xs mt-0.5">{fieldError('sku')}</p>}
-                        </div>
-                        <div>
-                            <label className="text-xs font-medium text-joya-gray block mb-1">Talla</label>
-                            <select value={variant.id_talla} onChange={(e) => onUpdate(variant._key, 'id_talla', e.target.value)} className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25">
-                                <option value="">Sin talla</option>
-                                {tallas.map((t) => <option key={t.id} value={t.id}>{t.talla}</option>)}
-                            </select>
-                            {fieldError('id_talla') && <p className="text-red-500 text-xs mt-0.5">{fieldError('id_talla')}</p>}
-                            <InlineTallaForm onCreated={onReloadTallas} />
-                        </div>
-                        <div>
-                            <label className="text-xs font-medium text-joya-gray block mb-1">Precio</label>
-                            <input type="number" step="0.01" min="0" value={variant.precio} onChange={(e) => onUpdate(variant._key, 'precio', e.target.value)} placeholder="0.00" className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
-                            {fieldError('precio') && <p className="text-red-500 text-xs mt-0.5">{fieldError('precio')}</p>}
-                        </div>
-                        <div>
-                            <label className="text-xs font-medium text-joya-gray block mb-1">Stock</label>
-                            <input type="number" min="0" value={variant.stock} onChange={(e) => onUpdate(variant._key, 'stock', e.target.value)} placeholder="0" className="w-full border border-joya-border rounded px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
-                            {fieldError('stock') && <p className="text-red-500 text-xs mt-0.5">{fieldError('stock')}</p>}
-                        </div>
-                    </div>
-
-                    {/* Colors */}
-                    <div>
-                        <label className="text-xs font-medium text-joya-gray block mb-1">Colores</label>
-                        <div className="flex flex-wrap gap-1.5">
-                            {colores.map((color) => (
-                                <button key={color.id} type="button" onClick={() => onToggleColor(variant._key, color.id)}
-                                    className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border transition-colors ${variant.colores.includes(color.id) ? 'bg-vino text-white border-vino' : 'bg-white text-joya-gray border-joya-border hover:border-joya-gold/50'}`}>
-                                    <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: color.cod_hex || '#ccc' }} />
-                                    {color.color}
-                                </button>
-                            ))}
-                            {colores.length === 0 && <span className="text-xs text-joya-gray">No hay colores.</span>}
-                        </div>
-                        <InlineColorForm onCreated={onReloadColors} />
-                    </div>
+                <div>
+                    <label className="mb-1 block text-xs font-medium text-joya-gray">Precio (Bs.)</label>
+                    <input type="number" step="0.01" min="0" value={variant.precio} onChange={(e) => onUpdate(variant._key, 'precio', e.target.value)} placeholder="0.00" className="w-full rounded border border-joya-border px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
+                    {fieldError('precio') && <p className="mt-0.5 text-xs text-red-500">{fieldError('precio')}</p>}
                 </div>
+                <div>
+                    <label className="mb-1 block text-xs font-medium text-joya-gray">Stock</label>
+                    <input type="number" min="0" value={variant.stock} onChange={(e) => onUpdate(variant._key, 'stock', e.target.value)} placeholder="0" className="w-full rounded border border-joya-border px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
+                    {fieldError('stock') && <p className="mt-0.5 text-xs text-red-500">{fieldError('stock')}</p>}
+                </div>
+            </div>
+
+            {/* Attributes defined in Admin → Atributos (Color, Talla, Material…) */}
+            {atributos.length > 0 ? (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    {atributos.map((a) => (
+                        <div key={a.id}>
+                            <label className="mb-1 block text-xs font-medium text-joya-gray">{a.nombre}</label>
+                            {a.tipo === 'color' ? (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {a.valores.map((val) => {
+                                        const on = Number(variant.valores[a.id]) === val.id;
+                                        return (
+                                            <button key={val.id} type="button" onClick={() => onSetValor(variant._key, a.id, on ? '' : val.id)}
+                                                className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors ${on ? 'border-vino bg-vino text-white' : 'border-joya-border bg-white text-joya-gray hover:border-vino/40'}`}>
+                                                <span className="h-2.5 w-2.5 rounded-full border border-black/10" style={{ backgroundColor: val.cod_hex || '#ccc' }} />
+                                                {val.valor}
+                                            </button>
+                                        );
+                                    })}
+                                    {a.valores.length === 0 && <span className="text-xs text-joya-gray">Sin valores todavía.</span>}
+                                </div>
+                            ) : (
+                                <select value={variant.valores[a.id] ?? ''} onChange={(e) => onSetValor(variant._key, a.id, e.target.value)} className="w-full rounded border border-joya-border px-3 py-2 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25">
+                                    <option value="">Sin {a.nombre.toLowerCase()}</option>
+                                    {a.valores.map((val) => <option key={val.id} value={val.id}>{val.valor}</option>)}
+                                </select>
+                            )}
+                            <InlineValorForm atributo={a} onCreated={onReloadAtributos} />
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <p className="mt-4 text-xs text-joya-gray">
+                    No hay atributos (Talla, Color…). Créalos en <Link href="/admin/atributos" className="text-vino underline">Atributos</Link>.
+                </p>
+            )}
+            {fieldError('valores') && <p className="mt-1 text-xs text-red-500">{fieldError('valores')}</p>}
+
+            <div className="mt-4">
+                <label className="mb-1 block text-xs font-medium text-joya-gray">Fotos</label>
+                <GaleriaImagenes value={variant.imagenes} onChange={(imgs) => onUpdate(variant._key, 'imagenes', imgs)} />
+                {errorFotos && <p className="mt-0.5 text-xs text-red-500">{errorFotos}</p>}
             </div>
         </div>
     );
@@ -365,12 +199,22 @@ function VariantCard({ variant, index, tallas, colores, errors, onUpdate, onRemo
 const emptyFormData = () => ({
     nombre: '',
     id_categoria: '',
+    descripcion: '',
+    slug: '',
+    meta_titulo: '',
+    meta_descripcion: '',
     tags: [],
     variantes: [],
     variantes_delete: [],
 });
 
-export default function Productos({ productos, categorias, colores, tallas, tags: allTags, filtros }) {
+/** Category options with subcategories indented under their parent. */
+const opcionesCategorias = (categorias, padre = null, nivel = 0) =>
+    categorias
+        .filter((c) => (c.parent_id ?? null) === padre)
+        .flatMap((c) => [{ ...c, nivel }, ...opcionesCategorias(categorias, c.id, nivel + 1)]);
+
+export default function Productos({ productos, categorias, atributos, tags: allTags, filtros }) {
     const { flash } = usePage().props;
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState(null);
@@ -404,7 +248,7 @@ export default function Productos({ productos, categorias, colores, tallas, tags
     const addVariant = () => {
         setFormData((prev) => ({
             ...prev,
-            variantes: [...prev.variantes, { _key: crypto.randomUUID(), id: null, sku: '', id_talla: '', precio: '', stock: '', url_foto: '', colores: [] }],
+            variantes: [...prev.variantes, { _key: crypto.randomUUID(), id: null, sku: '', precio: '', stock: '', valores: {}, imagenes: [] }],
         }));
     };
 
@@ -426,12 +270,10 @@ export default function Productos({ productos, categorias, colores, tallas, tags
         }));
     };
 
-    const toggleVariantColor = (key, colorId) => {
+    const setVariantValor = (key, atributoId, valorId) => {
         setFormData((prev) => ({
             ...prev,
-            variantes: prev.variantes.map((v) =>
-                v._key === key ? { ...v, colores: v.colores.includes(colorId) ? v.colores.filter((id) => id !== colorId) : [...v.colores, colorId] } : v
-            ),
+            variantes: prev.variantes.map((v) => (v._key === key ? { ...v, valores: { ...v.valores, [atributoId]: valorId } } : v)),
         }));
     };
 
@@ -448,16 +290,19 @@ export default function Productos({ productos, categorias, colores, tallas, tags
         setFormData({
             nombre: p.nombre,
             id_categoria: p.id_categoria,
+            descripcion: p.descripcion || '',
+            slug: p.slug || '',
+            meta_titulo: p.meta_titulo || '',
+            meta_descripcion: p.meta_descripcion || '',
             tags: p.tags?.map((t) => t.id) || [],
             variantes: (p.variantes || []).map((v) => ({
                 _key: crypto.randomUUID(),
                 id: v.id,
                 sku: v.sku || '',
-                id_talla: v.id_talla || '',
                 precio: v.precio || '',
                 stock: v.stock ?? '',
-                url_foto: v.url_foto || '',
-                colores: v.colores?.map((c) => c.id) || [],
+                valores: Object.fromEntries((v.valores || []).map((val) => [val.id_atributo, val.id])),
+                imagenes: v.imagenes?.length ? v.imagenes.map((img) => ({ url: img.url, alt: img.alt || '' })) : v.url_foto ? [{ url: v.url_foto, alt: '' }] : [],
             })),
             variantes_delete: [],
         });
@@ -473,8 +318,14 @@ export default function Productos({ productos, categorias, colores, tallas, tags
         const payload = {
             nombre: formData.nombre,
             id_categoria: formData.id_categoria,
+            descripcion: formData.descripcion,
+            slug: formData.slug,
+            meta_titulo: formData.meta_titulo,
+            meta_descripcion: formData.meta_descripcion,
             tags: formData.tags,
         };
+        // {atributoId: valorId} → [valorId, …]
+        const paraEnviar = ({ _key, valores, ...rest }) => ({ ...rest, valores: Object.values(valores).filter(Boolean).map(Number) });
 
         const opts = {
             onSuccess: () => { setShowModal(false); setEditing(null); },
@@ -484,12 +335,8 @@ export default function Productos({ productos, categorias, colores, tallas, tags
 
         if (editing) {
             // Partition into update (have id) and new (no id)
-            const variantesUpdate = formData.variantes
-                .filter((v) => v.id)
-                .map(({ _key, ...rest }) => rest);
-            const variantesNew = formData.variantes
-                .filter((v) => !v.id)
-                .map(({ _key, id, ...rest }) => rest);
+            const variantesUpdate = formData.variantes.filter((v) => v.id).map(paraEnviar);
+            const variantesNew = formData.variantes.filter((v) => !v.id).map(({ id, ...v }) => paraEnviar(v));
 
             router.put(`/admin/productos/${editing.id}`, {
                 ...payload,
@@ -499,14 +346,14 @@ export default function Productos({ productos, categorias, colores, tallas, tags
             }, opts);
         } else {
             // All variantes are new
-            const variantes = formData.variantes.map(({ _key, id, ...rest }) => rest);
+            const variantes = formData.variantes.map(({ id, ...v }) => paraEnviar(v));
             router.post('/admin/productos', { ...payload, variantes }, opts);
         }
     };
 
     const handleDelete = (id) => router.delete(`/admin/productos/${id}`, { onSuccess: () => setDeleteConfirm(null) });
 
-    const reloadPage = () => router.reload({ only: ['colores', 'tags', 'tallas'] });
+    const reloadPage = () => router.reload({ only: ['atributos', 'tags'] });
 
     // ── Error mapping for variants ──
     const getVariantErrors = (index) => {
@@ -610,7 +457,7 @@ export default function Productos({ productos, categorias, colores, tallas, tags
             {/* Unified Product + Variants Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
-                    <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white rounded-[28px] w-full max-w-4xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between px-6 py-4 border-b border-joya-border sticky top-0 bg-white z-10">
                             <h3 className="font-semibold text-joya-black text-lg">{editing ? 'Editar Producto' : 'Nuevo Producto'}</h3>
                             <button onClick={() => setShowModal(false)} className="text-joya-gray hover:text-joya-black">
@@ -634,10 +481,15 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                                         <label className="text-sm font-medium text-joya-black block mb-1.5">Categoria</label>
                                         <select value={formData.id_categoria} onChange={(e) => setField('id_categoria', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25">
                                             <option value="">Seleccionar categoria</option>
-                                            {categorias.map((c) => <option key={c.id} value={c.id}>{c.categoria}</option>)}
+                                            {opcionesCategorias(categorias).map((c) => <option key={c.id} value={c.id}>{'\u00a0\u00a0\u00a0'.repeat(c.nivel)}{c.nivel ? '↳ ' : ''}{c.categoria}</option>)}
                                         </select>
                                         {formErrors.id_categoria && <p className="text-red-500 text-xs mt-1">{formErrors.id_categoria}</p>}
                                     </div>
+                                </div>
+                                <div className="mt-4">
+                                    <label className="text-sm font-medium text-joya-black block mb-1.5">Descripción</label>
+                                    <textarea rows={4} value={formData.descripcion} onChange={(e) => setField('descripcion', e.target.value)} placeholder="Materiales, medidas, cuidados, para qué ocasión es… Una buena descripción ayuda a vender y a aparecer en Google." className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
+                                    {formErrors.descripcion && <p className="text-red-500 text-xs mt-1">{formErrors.descripcion}</p>}
                                 </div>
                                 <div className="mt-4">
                                     <label className="text-sm font-medium text-joya-black block mb-1.5">Tags</label>
@@ -653,6 +505,16 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                                     <InlineTagForm onCreated={reloadPage} />
                                 </div>
                             </div>
+
+                            {/* ── SEO ── */}
+                            <CamposSeo
+                                datos={formData}
+                                onChange={setField}
+                                errors={formErrors}
+                                tituloBase={formData.nombre}
+                                descripcionBase={formData.descripcion}
+                                prefijoUrl="/producto/"
+                            />
 
                             {/* ── Variants Section ── */}
                             <div className="border-t border-joya-border pt-6">
@@ -680,14 +542,12 @@ export default function Productos({ productos, categorias, colores, tallas, tags
                                                 key={v._key}
                                                 variant={v}
                                                 index={i}
-                                                tallas={tallas}
-                                                colores={colores}
+                                                atributos={atributos}
                                                 errors={getVariantErrors(i)}
                                                 onUpdate={updateVariant}
                                                 onRemove={removeVariant}
-                                                onToggleColor={toggleVariantColor}
-                                                onReloadColors={reloadPage}
-                                                onReloadTallas={reloadPage}
+                                                onSetValor={setVariantValor}
+                                                onReloadAtributos={reloadPage}
                                             />
                                         ))}
                                     </div>
@@ -768,27 +628,35 @@ function ProductRow({ producto: p, isExpanded, onToggle, onEdit, deleteConfirm, 
                                 <table className="w-full text-xs">
                                     <thead><tr className="border-b border-joya-border bg-gray-50/50">
                                         <th className="text-left px-4 py-2 font-medium text-joya-gray uppercase tracking-wider">SKU</th>
-                                        <th className="text-left px-4 py-2 font-medium text-joya-gray uppercase tracking-wider">Talla</th>
+                                        <th className="text-left px-4 py-2 font-medium text-joya-gray uppercase tracking-wider">Atributos</th>
                                         <th className="text-left px-4 py-2 font-medium text-joya-gray uppercase tracking-wider">Precio</th>
                                         <th className="text-left px-4 py-2 font-medium text-joya-gray uppercase tracking-wider">Stock</th>
-                                        <th className="text-left px-4 py-2 font-medium text-joya-gray uppercase tracking-wider">Colores</th>
-                                        <th className="text-left px-4 py-2 font-medium text-joya-gray uppercase tracking-wider">Foto</th>
+                                        <th className="text-left px-4 py-2 font-medium text-joya-gray uppercase tracking-wider">Fotos</th>
                                     </tr></thead>
                                     <tbody>
                                         {p.variantes.map((v) => (
                                             <tr key={v.id} className="border-b border-joya-border last:border-0 hover:bg-joya-cream/30">
                                                 <td className="px-4 py-2.5 text-joya-gray font-mono">{v.sku || '\u2014'}</td>
-                                                <td className="px-4 py-2.5 text-joya-gray">{v.talla?.talla || '\u2014'}</td>
+                                                <td className="px-4 py-2.5 text-joya-gray">
+                                                    <div className="flex flex-wrap items-center gap-1">
+                                                        {v.valores?.map((val) => (
+                                                            <span key={val.id} title={val.atributo?.nombre} className="inline-flex items-center gap-1 rounded-full bg-humo px-2 py-0.5">
+                                                                {val.cod_hex && <span className="h-2.5 w-2.5 rounded-full border border-black/10" style={{ backgroundColor: val.cod_hex }} />}
+                                                                {val.valor}
+                                                            </span>
+                                                        ))}
+                                                        {!v.valores?.length && '\u2014'}
+                                                    </div>
+                                                </td>
                                                 <td className="px-4 py-2.5 text-joya-black font-medium">Bs {parseFloat(v.precio).toFixed(2)}</td>
                                                 <td className="px-4 py-2.5"><span className={v.stock === 0 ? 'text-red-500 font-medium' : 'text-joya-gray'}>{v.stock}</span></td>
                                                 <td className="px-4 py-2.5">
-                                                    <div className="flex items-center gap-1">
-                                                        {v.colores?.map((c) => <span key={c.id} title={c.color} className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: c.cod_hex || '#ccc' }} />)}
-                                                        {(!v.colores || v.colores.length === 0) && <span className="text-joya-gray">{'\u2014'}</span>}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-2.5">
-                                                    {v.url_foto ? <img src={v.url_foto} alt="Variante" className="w-8 h-8 rounded object-cover border border-joya-border" /> : <span className="text-joya-gray">{'\u2014'}</span>}
+                                                    {v.url_foto ? (
+                                                        <span className="inline-flex items-center gap-1.5">
+                                                            <img src={v.url_foto} alt="Variante" className="w-8 h-8 rounded object-cover border border-joya-border" />
+                                                            {v.imagenes?.length > 1 && <span className="text-joya-gray">+{v.imagenes.length - 1}</span>}
+                                                        </span>
+                                                    ) : <span className="text-joya-gray">{'\u2014'}</span>}
                                                 </td>
                                             </tr>
                                         ))}

@@ -9,7 +9,14 @@ use App\Http\Middleware\IsAdmin;
 // Public routes
 Route::get('/', [CatalogoController::class, 'home'])->name('home');
 Route::get('/catalogo', [CatalogoController::class, 'index'])->name('catalogo.index');
-Route::get('/catalogo/{id}', [CatalogoController::class, 'show'])->name('catalogo.show');
+Route::get('/categoria/{slug}', [CatalogoController::class, 'categoria'])->name('categoria.show');
+Route::get('/producto/{slug}', [CatalogoController::class, 'show'])->name('producto.show');
+// Old product links (/catalogo/15) redirect to the product's own URL.
+Route::get('/catalogo/{id}', [CatalogoController::class, 'showPorId'])->whereNumber('id')->name('catalogo.show');
+
+// SEO
+Route::get('/sitemap.xml', [CatalogoController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [CatalogoController::class, 'robots'])->name('robots');
 
 // Authenticated user routes
 Route::middleware('auth')->group(function () {
@@ -47,17 +54,18 @@ Route::middleware(['auth', IsAdmin::class])->prefix('admin')->group(function () 
     Route::put('/categorias/{id}', [AdminController::class, 'categoriaUpdate'])->name('admin.categorias.update');
     Route::delete('/categorias/{id}', [AdminController::class, 'categoriaDestroy'])->name('admin.categorias.destroy');
 
-    // Tallas
-    Route::get('/tallas', [AdminController::class, 'tallas'])->name('admin.tallas');
-    Route::post('/tallas', [AdminController::class, 'tallaStore'])->name('admin.tallas.store');
-    Route::put('/tallas/{id}', [AdminController::class, 'tallaUpdate'])->name('admin.tallas.update');
-    Route::delete('/tallas/{id}', [AdminController::class, 'tallaDestroy'])->name('admin.tallas.destroy');
+    // Atributos de las variantes (Talla, Color, Material…) y sus valores
+    Route::get('/atributos', [AdminController::class, 'atributos'])->name('admin.atributos');
+    Route::post('/atributos', [AdminController::class, 'atributoStore'])->name('admin.atributos.store');
+    Route::put('/atributos/{id}', [AdminController::class, 'atributoUpdate'])->name('admin.atributos.update');
+    Route::delete('/atributos/{id}', [AdminController::class, 'atributoDestroy'])->name('admin.atributos.destroy');
+    Route::post('/atributos/{id}/valores', [AdminController::class, 'valorStore'])->name('admin.valores.store');
+    Route::put('/valores/{id}', [AdminController::class, 'valorUpdate'])->name('admin.valores.update');
+    Route::delete('/valores/{id}', [AdminController::class, 'valorDestroy'])->name('admin.valores.destroy');
 
-    // Colores
-    Route::get('/colores', [AdminController::class, 'colores'])->name('admin.colores');
-    Route::post('/colores', [AdminController::class, 'colorStore'])->name('admin.colores.store');
-    Route::put('/colores/{id}', [AdminController::class, 'colorUpdate'])->name('admin.colores.update');
-    Route::delete('/colores/{id}', [AdminController::class, 'colorDestroy'])->name('admin.colores.destroy');
+    // SEO
+    Route::get('/seo', [AdminController::class, 'seo'])->name('admin.seo');
+    Route::put('/seo', [AdminController::class, 'seoUpdate'])->name('admin.seo.update');
 
     // Tags
     Route::get('/tags', [AdminController::class, 'tags'])->name('admin.tags');

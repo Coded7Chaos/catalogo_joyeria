@@ -3,10 +3,10 @@
 const figma = '/images/figma';
 
 export const assets = {
-    heroSection: `${figma}/056f2.png`,
+    heroSection: `${figma}/056f2.webp`,
     soyPrioridadBg: `${figma}/3ed16.svg`,
     soyPrioridadTrazo: `${figma}/27468.svg`,
-    sarah: `${figma}/1eda6.png`,
+    sarah: `${figma}/1eda6.webp`,
     // Figma Make no permite exportar estas dos fotos; mientras no existan en
     // public/images/figma se muestra su reemplazo de `imageFallbacks`.
     stefan: `${figma}/3f576.png`,
@@ -49,10 +49,21 @@ const collectionCovers = {
     conjuntos: stock.pearlSet,
 };
 
-export const coverFor = (categoria) => collectionCovers[normalize(categoria)] ?? null;
+/** Cover photo of a category: the one uploaded in the admin, else a stock photo by name. */
+export const coverFor = (categoria) =>
+    (typeof categoria === 'object' ? categoria?.imagen : null) ||
+    collectionCovers[normalize(typeof categoria === 'object' ? categoria?.categoria : categoria)] ||
+    null;
+
+export const productoUrl = (producto) => (producto.slug ? `/producto/${producto.slug}` : `/catalogo/${producto.id}`);
+
+export const categoriaUrl = (categoria) => `/categoria/${categoria.slug}`;
+
+/** Every category of the menu tree in one flat list (roots and subcategories). */
+export const aplanarCategorias = (arbol = []) => arbol.flatMap((c) => [c, ...aplanarCategorias(c.hijas)]);
 
 export const findCategoria = (categorias, nombre) =>
-    categorias.find((c) => normalize(c.categoria) === normalize(nombre)) ?? null;
+    aplanarCategorias(categorias).find((c) => normalize(c.categoria) === normalize(nombre)) ?? null;
 
 /** Tarjetas editoriales del tablero y la posición que ocupan, como en el frame de Figma. */
 export const editorialTiles = [
@@ -83,14 +94,22 @@ export function precioDe(producto) {
     return new Set(precios).size > 1 ? `Desde ${formatPrice(min)}` : formatPrice(min);
 }
 
-/** Colores distintos entre todas las variantes de un producto. */
+/** Distinct values of the color-type attributes across a product's variants. */
 export const coloresDe = (producto) => [
     ...new Map(
         (producto.variantes ?? [])
-            .flatMap((v) => v.colores ?? [])
-            .map((c) => [c.cod_hex ?? c.color, c]),
+            .flatMap((v) => v.valores ?? [])
+            .filter((val) => val.atributo?.tipo === 'color' || val.cod_hex)
+            .map((val) => [val.cod_hex ?? val.valor, { id: val.id, color: val.valor, cod_hex: val.cod_hex }]),
     ).values(),
 ];
+
+/** "Dorado · 16" — a variant's values, in the order of their attributes. */
+export const etiquetaVariante = (variante) =>
+    [...(variante.valores ?? [])]
+        .sort((a, b) => (a.atributo?.orden ?? 0) - (b.atributo?.orden ?? 0))
+        .map((v) => v.valor)
+        .join(' · ') || 'Estándar';
 
 /** Datos de contacto de la tienda (pie de página y botones de WhatsApp). */
 export const contacto = {

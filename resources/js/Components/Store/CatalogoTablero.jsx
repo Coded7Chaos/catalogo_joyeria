@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { EditorialTile, ProductTile } from './BoardTile';
 import Pagination from './Pagination';
 import { CloseIcon, FilterIcon, SearchIcon } from './Icons';
-import { editorialTiles } from '@/lib/catalogo';
+import { aplanarCategorias, categoriaUrl, editorialTiles } from '@/lib/catalogo';
 
 const toggle = (arr, id) => (arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
 
@@ -11,28 +11,33 @@ const scrollToCatalog = () => document.getElementById('catalogo')?.scrollIntoVie
 
 const sectionLabel = 'mb-3 block text-[11px] uppercase tracking-[0.2em] text-tinta/55';
 
+const chip = (isActive) =>
+    `shrink-0 rounded-full px-4 py-2 text-sm transition-colors ${
+        isActive ? 'bg-vino text-white' : 'bg-white text-tinta hover:bg-rosa-deep'
+    }`;
+
 /**
- * Pinterest-style board from the Figma Make design with the store's filters
- * (search, category, colors, sizes, price and tags). Filters are sent to
- * `baseUrl` as query params, the same way the pages did before.
+ * Pinterest-style board from the Figma Make design with the store's filters.
+ * Categories are real links (/categoria/…) so Google can follow them; the rest
+ * of the filters (search, attribute values, price, tags) are sent to `baseUrl`
+ * as query params.
  */
 export default function CatalogoTablero({
     baseUrl,
     productos,
-    categorias,
-    colores,
-    tallas,
-    tags,
+    atributos = [],
+    tags = [],
     rangoPrecio,
     filtros,
+    categoria = null,
     title,
     showEditorial = false,
 }) {
+    const { categoriasMenu = [] } = usePage().props;
+
     const [search, setSearch] = useState(filtros.search || '');
-    const [selectedCategory, setSelectedCategory] = useState(filtros.id_categoria || '');
-    const [selectedColores, setSelectedColores] = useState(filtros.colores || []);
-    const [selectedTallas, setSelectedTallas] = useState(filtros.tallas || []);
-    const [selectedTags, setSelectedTags] = useState(filtros.tags || []);
+    const [selectedValores, setSelectedValores] = useState((filtros.valores || []).map(String));
+    const [selectedTags, setSelectedTags] = useState((filtros.tags || []).map(String));
     const [precioMin, setPrecioMin] = useState(filtros.precio_min || '');
     const [precioMax, setPrecioMax] = useState(filtros.precio_max || '');
     const [filtersOpen, setFiltersOpen] = useState(false);
@@ -66,24 +71,20 @@ export default function CatalogoTablero({
         (overrides = {}) => {
             const f = {
                 search: overrides.search !== undefined ? overrides.search : search,
-                id_categoria: overrides.id_categoria !== undefined ? overrides.id_categoria : selectedCategory,
-                colores: overrides.colores !== undefined ? overrides.colores : selectedColores,
-                tallas: overrides.tallas !== undefined ? overrides.tallas : selectedTallas,
+                valores: overrides.valores !== undefined ? overrides.valores : selectedValores,
                 tags: overrides.tags !== undefined ? overrides.tags : selectedTags,
                 precio_min: overrides.precio_min !== undefined ? overrides.precio_min : precioMin,
                 precio_max: overrides.precio_max !== undefined ? overrides.precio_max : precioMax,
             };
             const params = {};
             if (f.search) params.search = f.search;
-            if (f.id_categoria) params.id_categoria = f.id_categoria;
-            if (f.colores?.length) params.colores = f.colores;
-            if (f.tallas?.length) params.tallas = f.tallas;
+            if (f.valores?.length) params.valores = f.valores;
             if (f.tags?.length) params.tags = f.tags;
             if (f.precio_min) params.precio_min = f.precio_min;
             if (f.precio_max) params.precio_max = f.precio_max;
             return params;
         },
-        [search, selectedCategory, selectedColores, selectedTallas, selectedTags, precioMin, precioMax],
+        [search, selectedValores, selectedTags, precioMin, precioMax],
     );
 
     const applyFilters = useCallback(
@@ -104,21 +105,10 @@ export default function CatalogoTablero({
         debounced({ search: value });
     };
 
-    const handleCategoryToggle = (catId) => {
-        const s = catId ? catId.toString() : '';
-        const v = selectedCategory === s ? '' : s;
-        setSelectedCategory(v);
-        applyFilters({ id_categoria: v });
-    };
-    const handleColorToggle = (id) => {
-        const n = toggle(selectedColores, id.toString());
-        setSelectedColores(n);
-        applyFilters({ colores: n });
-    };
-    const handleTallaToggle = (id) => {
-        const n = toggle(selectedTallas, id.toString());
-        setSelectedTallas(n);
-        applyFilters({ tallas: n });
+    const handleValorToggle = (id) => {
+        const n = toggle(selectedValores, id.toString());
+        setSelectedValores(n);
+        applyFilters({ valores: n });
     };
     const handleTagToggle = (id) => {
         const n = toggle(selectedTags, id.toString());
@@ -134,9 +124,7 @@ export default function CatalogoTablero({
 
     const clearFilters = () => {
         setSearch('');
-        setSelectedCategory('');
-        setSelectedColores([]);
-        setSelectedTallas([]);
+        setSelectedValores([]);
         setSelectedTags([]);
         setPrecioMin('');
         setPrecioMax('');
@@ -153,19 +141,18 @@ export default function CatalogoTablero({
         });
     }, []);
 
-    const hasActiveFilters =
-        search || selectedCategory || selectedColores.length || selectedTallas.length || selectedTags.length || precioMin || precioMax;
+    const hasActiveFilters = search || selectedValores.length || selectedTags.length || precioMin || precioMax;
 
-    // Category has its own chip row, so the drawer badge counts the rest.
+    const valoresPorId = useMemo(
+        () => Object.fromEntries(atributos.flatMap((a) => a.valores.map((v) => [String(v.id), { ...v, atributo: a.nombre }]))),
+        [atributos],
+    );
+
     const activeChips = [];
     if (search) activeChips.push({ label: `“${search}”`, onRemove: () => handleSearchChange('') });
-    selectedColores.forEach((id) => {
-        const c = colores.find((c) => c.id.toString() === id);
-        activeChips.push({ label: c?.color || 'Color', onRemove: () => handleColorToggle(id) });
-    });
-    selectedTallas.forEach((id) => {
-        const t = tallas.find((t) => t.id.toString() === id);
-        activeChips.push({ label: `Talla ${t?.talla || ''}`, onRemove: () => handleTallaToggle(id) });
+    selectedValores.forEach((id) => {
+        const v = valoresPorId[id];
+        activeChips.push({ label: v ? `${v.atributo}: ${v.valor}` : 'Filtro', onRemove: () => handleValorToggle(id) });
     });
     selectedTags.forEach((id) => {
         const t = tags.find((t) => t.id.toString() === id);
@@ -182,10 +169,15 @@ export default function CatalogoTablero({
         });
     }
 
-    const nombreCategoria = useMemo(
-        () => Object.fromEntries(categorias.map((c) => [c.id, c.categoria])),
-        [categorias],
-    );
+    const todas = useMemo(() => aplanarCategorias(categoriasMenu), [categoriasMenu]);
+    const nombreCategoria = useMemo(() => Object.fromEntries(todas.map((c) => [c.id, c.categoria])), [todas]);
+    const porId = useMemo(() => Object.fromEntries(todas.map((c) => [c.id, c])), [todas]);
+
+    // One row of tabs per level of the current category: roots, then its subcategories, and so on.
+    const ruta = categoria?.ruta ?? [];
+    const filasSub = ruta
+        .map((nivel, i) => ({ padre: porId[nivel.id], activa: ruta[i + 1] }))
+        .filter(({ padre }) => padre?.hijas?.length);
 
     const items = useMemo(() => {
         const list = productos.data.map((p) => ({ type: 'product', key: `p${p.id}`, producto: p }));
@@ -196,11 +188,6 @@ export default function CatalogoTablero({
         }
         return list;
     }, [productos, showEditorial, hasActiveFilters]);
-
-    const chip = (isActive) =>
-        `shrink-0 rounded-full px-4 py-2 text-sm transition-colors ${
-            isActive ? 'bg-vino text-white' : 'bg-white text-tinta hover:bg-rosa-deep'
-        }`;
 
     const filterPanel = (
         <div className="space-y-8">
@@ -218,52 +205,42 @@ export default function CatalogoTablero({
                 </label>
             </div>
 
-            {colores?.length > 0 && (
-                <div>
-                    <span className={sectionLabel}>Colores</span>
-                    <div className="flex flex-wrap gap-2.5">
-                        {colores.map((color) => {
-                            const on = selectedColores.includes(color.id.toString());
-                            return (
-                                <button
-                                    key={color.id}
-                                    onClick={() => handleColorToggle(color.id)}
-                                    title={color.color}
-                                    aria-label={color.color}
-                                    aria-pressed={on}
-                                    className={`h-9 w-9 rounded-full ring-offset-2 transition-all ${
-                                        on ? 'scale-110 ring-2 ring-vino' : 'ring-1 ring-tinta/15 hover:ring-vino/40'
-                                    }`}
-                                    style={{ backgroundColor: color.cod_hex }}
-                                />
-                            );
-                        })}
+            {atributos
+                .filter((a) => a.valores?.length)
+                .map((atributo) => (
+                    <div key={atributo.id}>
+                        <span className={sectionLabel}>{atributo.nombre}</span>
+                        <div className="flex flex-wrap gap-2.5">
+                            {atributo.valores.map((valor) => {
+                                const on = selectedValores.includes(valor.id.toString());
+                                return atributo.tipo === 'color' ? (
+                                    <button
+                                        key={valor.id}
+                                        onClick={() => handleValorToggle(valor.id)}
+                                        title={valor.valor}
+                                        aria-label={valor.valor}
+                                        aria-pressed={on}
+                                        className={`h-9 w-9 rounded-full ring-offset-2 transition-all ${
+                                            on ? 'scale-110 ring-2 ring-vino' : 'ring-1 ring-tinta/15 hover:ring-vino/40'
+                                        }`}
+                                        style={{ backgroundColor: valor.cod_hex || '#e5e0d8' }}
+                                    />
+                                ) : (
+                                    <button
+                                        key={valor.id}
+                                        onClick={() => handleValorToggle(valor.id)}
+                                        aria-pressed={on}
+                                        className={`min-w-[44px] rounded-full border px-4 py-2 text-sm transition-colors ${
+                                            on ? 'border-vino bg-vino text-white' : 'border-tinta/15 text-tinta hover:border-vino'
+                                        }`}
+                                    >
+                                        {valor.valor}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            )}
-
-            {tallas?.length > 0 && (
-                <div>
-                    <span className={sectionLabel}>Tallas</span>
-                    <div className="flex flex-wrap gap-2">
-                        {tallas.map((talla) => {
-                            const on = selectedTallas.includes(talla.id.toString());
-                            return (
-                                <button
-                                    key={talla.id}
-                                    onClick={() => handleTallaToggle(talla.id)}
-                                    aria-pressed={on}
-                                    className={`min-w-[44px] rounded-full border px-4 py-2 text-sm transition-colors ${
-                                        on ? 'border-vino bg-vino text-white' : 'border-tinta/15 text-tinta hover:border-vino'
-                                    }`}
-                                >
-                                    {talla.talla}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
+                ))}
 
             {rangoPrecio && (
                 <div>
@@ -318,35 +295,41 @@ export default function CatalogoTablero({
     return (
         <section id="catalogo" className="scroll-mt-[73px] bg-rosa lg:scroll-mt-[121px]">
             <div className="mx-auto max-w-[1440px] px-3 py-14 sm:px-8 lg:py-20">
-                <div className="flex flex-col gap-6 px-2 sm:px-0 md:flex-row md:items-end md:justify-between">
+                <div className="flex flex-col gap-6 px-2 sm:px-0 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                        <p className="text-[13px] font-medium uppercase tracking-[0.22em] text-vino-soft">Catálogo</p>
-                        <h2 className="mt-2 font-display text-[44px] font-normal leading-none text-tinta sm:text-[60px]">
-                            {selectedCategory
-                                ? nombreCategoria[selectedCategory] ?? 'Catálogo'
-                                : title ?? (
-                                      <>
-                                          El <em>tablero</em> de joyas
-                                      </>
-                                  )}
-                        </h2>
+                        <p className="text-[13px] font-medium uppercase tracking-[0.22em] text-vino-soft">
+                            {ruta.length > 1 ? ruta[ruta.length - 2].categoria : 'Catálogo'}
+                        </p>
+                        {/* Category pages already have their <h1> (the category name); the home board is a section. */}
+                        {(() => {
+                            const Titulo = categoria || title ? 'h1' : 'h2';
+                            return (
+                                <Titulo className="mt-2 font-display text-[44px] font-normal leading-none text-tinta sm:text-[60px]">
+                                    {categoria?.categoria ??
+                                        title ?? (
+                                            <>
+                                                El <em>tablero</em> de joyas
+                                            </>
+                                        )}
+                                </Titulo>
+                            );
+                        })()}
+                        {categoria?.descripcion && (
+                            <p className="mt-4 max-w-2xl whitespace-pre-line text-[15px] leading-relaxed text-tinta/75">{categoria.descripcion}</p>
+                        )}
                         <p className="mt-3 max-w-md text-[15px] text-tinta/65">
                             {productos.total} {productos.total === 1 ? 'pieza' : 'piezas'} ·{' '}
                             {canHover ? 'pasa el cursor sobre una pieza para ver su precio.' : 'toca una pieza para ver su precio.'}
                         </p>
                     </div>
-                    <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 md:mx-0 md:px-0">
-                        <button onClick={() => selectedCategory && handleCategoryToggle('')} className={chip(!selectedCategory)}>
+                    <nav aria-label="Categorías" className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 lg:mx-0 lg:px-0">
+                        <Link href="/catalogo" className={chip(!categoria)}>
                             Todo
-                        </button>
-                        {categorias.map((c) => (
-                            <button
-                                key={c.id}
-                                onClick={() => handleCategoryToggle(c.id)}
-                                className={chip(selectedCategory === c.id.toString())}
-                            >
+                        </Link>
+                        {categoriasMenu.map((c) => (
+                            <Link key={c.id} href={categoriaUrl(c)} className={chip(ruta[0]?.id === c.id)}>
                                 {c.categoria}
-                            </button>
+                            </Link>
                         ))}
                         <button
                             onClick={() => setFiltersOpen(true)}
@@ -360,8 +343,29 @@ export default function CatalogoTablero({
                                 </span>
                             )}
                         </button>
-                    </div>
+                    </nav>
                 </div>
+
+                {filasSub.map(({ padre, activa }) => (
+                    <nav
+                        key={padre.id}
+                        aria-label={`Subcategorías de ${padre.categoria}`}
+                        className="no-scrollbar -mx-3 mt-4 flex gap-2 overflow-x-auto px-5 sm:mx-0 sm:px-0"
+                    >
+                        <Link href={categoriaUrl(padre)} className={`${chip(!activa)} border border-vino/15 !py-1.5 text-[13px]`}>
+                            Todo {padre.categoria}
+                        </Link>
+                        {padre.hijas.map((h) => (
+                            <Link
+                                key={h.id}
+                                href={categoriaUrl(h)}
+                                className={`${chip(activa?.id === h.id)} border border-vino/15 !py-1.5 text-[13px]`}
+                            >
+                                {h.categoria}
+                            </Link>
+                        ))}
+                    </nav>
+                ))}
 
                 {activeChips.length > 0 && (
                     <div className="mt-6 flex flex-wrap items-center gap-2 px-2 sm:px-0">

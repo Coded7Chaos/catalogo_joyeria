@@ -19,7 +19,6 @@ class VarianteFactory extends Factory
         return [
             'sku' => $this->faker->unique()->ean13(),
             'id_producto' => \App\Models\Producto::factory(),
-            'id_talla' => \App\Models\Talla::factory(),
             'precio' => $this->faker->randomFloat(2, 10, 90),
             'stock' => $this->faker->numberBetween(0, 100),
             'url_foto' => 'https://via.placeholder.com/300x300.png/eeeeee?text=Variante',

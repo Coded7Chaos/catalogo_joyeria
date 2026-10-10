@@ -30,6 +30,8 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
             ],
+            // Category tree for the store menus and filter tabs (cached, rebuilt when categories change).
+            'categoriasMenu' => fn () => \App\Models\Categoria::menu(),
         ]);
     }
 }

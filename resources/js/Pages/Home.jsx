@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import CatalogoLayout from '@/Layouts/CatalogoLayout';
 import CatalogoTablero from '@/Components/Store/CatalogoTablero';
 import RailCard from '@/Components/Store/RailCard';
 import StoreImage from '@/Components/Store/StoreImage';
+import Seo from '@/Components/Store/Seo';
 import { ChevronLeft, ChevronRight } from '@/Components/Store/Icons';
-import { assets, coverFor, findCategoria, stock } from '@/lib/catalogo';
+import { assets, categoriaUrl, coverFor, findCategoria, stock } from '@/lib/catalogo';
 
 const slides = [
     {
@@ -70,7 +71,8 @@ const ventajas = [
 
 const scrollToCatalog = () => document.getElementById('catalogo')?.scrollIntoView({ behavior: 'smooth' });
 
-export default function Home({ categorias, novedades, totalProductos, productos, colores, tallas, tags, rangoPrecio, filtros }) {
+export default function Home({ novedades, totalProductos, productos, atributos, tags, rangoPrecio, filtros, seo }) {
+    const { categoriasMenu: categorias = [] } = usePage().props;
     const [slide, setSlide] = useState(0);
     const railRef = useRef(null);
 
@@ -79,11 +81,7 @@ export default function Home({ categorias, novedades, totalProductos, productos,
         return () => clearTimeout(t);
     }, [slide]);
 
-    // Opens the board filtered by a category (the board reads its filters from the URL).
-    const verCategoria = (categoria) => {
-        if (!categoria) return scrollToCatalog();
-        router.get('/', { id_categoria: categoria.id }, { onSuccess: scrollToCatalog });
-    };
+    const verCategoria = (categoria) => (categoria ? router.visit(categoriaUrl(categoria)) : scrollToCatalog());
 
     const scrollRail = (dir) => {
         const el = railRef.current;
@@ -92,7 +90,7 @@ export default function Home({ categorias, novedades, totalProductos, productos,
 
     return (
         <CatalogoLayout transparentHeader>
-            <Head title="Inicio" />
+            <Seo seo={seo} />
 
             {/* Hero */}
             <section className="relative h-[88svh] min-h-[560px] overflow-hidden bg-vino-deep text-white lg:h-[92svh]">
@@ -105,6 +103,7 @@ export default function Home({ categorias, novedades, totalProductos, productos,
                         <StoreImage
                             src={s.src}
                             alt=""
+                            fetchpriority={i === 0 ? 'high' : 'low'}
                             className={`absolute inset-0 h-full w-full object-cover transition-transform duration-[7000ms] ease-out ${
                                 i === slide ? 'scale-105' : 'scale-100'
                             }`}
@@ -166,18 +165,18 @@ export default function Home({ categorias, novedades, totalProductos, productos,
                     <p className="text-center text-[13px] font-medium uppercase tracking-[0.22em] text-tinta/70">Comprar por colección</p>
                     <div className="mt-10 flex flex-wrap justify-center gap-x-4 gap-y-10 lg:gap-x-6">
                         {categorias.map((c) => {
-                            const cover = coverFor(c.categoria);
+                            const cover = coverFor(c);
                             return (
-                                <button
+                                <Link
                                     key={c.id}
-                                    onClick={() => verCategoria(c)}
+                                    href={categoriaUrl(c)}
                                     className="group basis-[calc(50%-0.5rem)] text-center sm:basis-[calc(33.333%-0.7rem)] lg:basis-[calc(20%-1.2rem)]"
                                 >
                                     <div className="relative aspect-square overflow-hidden rounded-full bg-rosa">
                                         {cover ? (
                                             <img
                                                 src={cover}
-                                                alt={c.categoria}
+                                                alt={`Colección de ${c.categoria}`}
                                                 loading="lazy"
                                                 className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
                                             />
@@ -191,7 +190,7 @@ export default function Home({ categorias, novedades, totalProductos, productos,
                                     <p className="mt-5 font-display text-[28px] leading-none text-tinta transition-colors group-hover:text-vino sm:text-[32px]">
                                         {c.categoria}
                                     </p>
-                                </button>
+                                </Link>
                             );
                         })}
                     </div>
@@ -214,9 +213,7 @@ export default function Home({ categorias, novedades, totalProductos, productos,
             <CatalogoTablero
                 baseUrl="/"
                 productos={productos}
-                categorias={categorias}
-                colores={colores}
-                tallas={tallas}
+                atributos={atributos}
                 tags={tags}
                 rangoPrecio={rangoPrecio}
                 filtros={filtros}

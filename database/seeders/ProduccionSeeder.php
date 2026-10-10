@@ -2,12 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Atributo;
 use App\Models\Categoria;
 use App\Models\Cliente;
-use App\Models\Color;
 use App\Models\Producto;
 use App\Models\Tag;
-use App\Models\Talla;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -20,7 +19,7 @@ use Illuminate\Support\Facades\Hash;
  *
  * - Admin: toma ADMIN_NOMBRE, ADMIN_EMAIL y ADMIN_PASSWORD del .env.
  * - Productos: lee database/seeders/data/productos.json (ver productos.example.json).
- *   Cada "foto" es un archivo dentro de public/images/productos/.
+ *   Cada foto es un archivo dentro de public/images/productos/.
  */
 class ProduccionSeeder extends Seeder
 {
@@ -28,14 +27,17 @@ class ProduccionSeeder extends Seeder
     {
         $this->crearAdmin();
 
-        foreach (['Collares', 'Anillos', 'Pulseras', 'Pendientes', 'Conjuntos'] as $nombre) {
-            Categoria::firstOrCreate(['categoria' => $nombre]);
+        foreach (['Collares', 'Anillos', 'Pulseras', 'Pendientes', 'Conjuntos'] as $orden => $nombre) {
+            Categoria::firstOrCreate(['categoria' => $nombre, 'parent_id' => null], ['orden' => $orden]);
         }
-        foreach (['Única', '14', '15', '16', '17', '18'] as $talla) {
-            Talla::firstOrCreate(['talla' => $talla]);
+
+        $color = $this->atributo('Color', 'color', 1);
+        foreach ([['Dorado', '#C9A46A'], ['Plateado', '#C0C0C0'], ['Oro rosa', '#B76E79']] as $orden => [$valor, $hex]) {
+            $color->valores()->firstOrCreate(['valor' => $valor], ['cod_hex' => $hex, 'orden' => $orden]);
         }
-        foreach ([['Dorado', '#C9A46A'], ['Plateado', '#C0C0C0'], ['Oro rosa', '#B76E79']] as [$color, $hex]) {
-            Color::firstOrCreate(['color' => $color], ['cod_hex' => $hex, 'tipo' => 'Base']);
+        $talla = $this->atributo('Talla', 'texto', 2);
+        foreach (['Única', '14', '15', '16', '17', '18'] as $orden => $valor) {
+            $talla->valores()->firstOrCreate(['valor' => $valor], ['orden' => $orden]);
         }
 
         $this->crearProductos();
@@ -60,6 +62,11 @@ class ProduccionSeeder extends Seeder
         $this->command->info("Admin listo: {$email}");
     }
 
+    private function atributo(string $nombre, string $tipo, int $orden): Atributo
+    {
+        return Atributo::firstOrCreate(['nombre' => $nombre], ['tipo' => $tipo, 'orden' => $orden, 'filtrable' => true]);
+    }
+
     private function crearProductos(): void
     {
         $archivo = database_path('seeders/data/productos.json');
@@ -71,8 +78,17 @@ class ProduccionSeeder extends Seeder
         $productos = json_decode(file_get_contents($archivo), true, flags: JSON_THROW_ON_ERROR);
 
         foreach ($productos as $p) {
-            $categoria = Categoria::firstOrCreate(['categoria' => $p['categoria']]);
-            $producto = Producto::firstOrCreate(['nombre' => $p['nombre']], ['id_categoria' => $categoria->id]);
+            $categoria = Categoria::firstOrCreate(['categoria' => $p['categoria'], 'parent_id' => null]);
+            if (! empty($p['subcategoria'])) {
+                $categoria = Categoria::firstOrCreate(['categoria' => $p['subcategoria'], 'parent_id' => $categoria->id]);
+            }
+
+            $producto = Producto::firstOrCreate(['nombre' => $p['nombre']], [
+                'id_categoria' => $categoria->id,
+                'descripcion' => $p['descripcion'] ?? null,
+                'meta_titulo' => $p['meta_titulo'] ?? null,
+                'meta_descripcion' => $p['meta_descripcion'] ?? null,
+            ]);
 
             // Ya existía: se deja como está para no duplicar variantes.
             if (! $producto->wasRecentlyCreated) {
@@ -87,20 +103,47 @@ class ProduccionSeeder extends Seeder
                 foreach ($p['variantes'] as $v) {
                     $variante = $producto->variantes()->create([
                         'sku' => $v['sku'] ?? null,
-                        'id_talla' => Talla::firstOrCreate(['talla' => (string) ($v['talla'] ?? 'Única')])->id,
                         'precio' => $v['precio'],
                         'stock' => $v['stock'] ?? 0,
-                        'url_foto' => isset($v['foto']) ? '/images/productos/'.$v['foto'] : null,
                     ]);
 
-                    if (! empty($v['color'])) {
-                        $color = Color::firstOrCreate(['color' => $v['color']], ['cod_hex' => $v['hex'] ?? '#C9A46A', 'tipo' => 'Base']);
-                        $variante->colores()->sync([$color->id]);
-                    }
+                    $variante->valores()->sync($this->valores($v));
+
+                    $fotos = $v['fotos'] ?? (isset($v['foto']) ? [$v['foto']] : []);
+                    $variante->guardarImagenes(collect($fotos)->map(fn ($foto) => [
+                        'url' => str_starts_with($foto, 'http') || str_starts_with($foto, '/') ? $foto : '/images/productos/'.$foto,
+                        'alt' => $producto->nombre,
+                    ])->all());
                 }
             });
 
             $this->command->info("Producto creado: {$p['nombre']}");
         }
+    }
+
+    /**
+     * Attribute values of a variant. New format: "atributos": {"Color": "Dorado", "Talla": "16"}
+     * (a color can be {"valor": "Oro rosa", "hex": "#B76E79"}). Old format: "talla", "color", "hex".
+     */
+    private function valores(array $v): array
+    {
+        $atributos = $v['atributos'] ?? array_filter([
+            'Talla' => $v['talla'] ?? null,
+            'Color' => isset($v['color']) ? ['valor' => $v['color'], 'hex' => $v['hex'] ?? null] : null,
+        ]);
+
+        $ids = [];
+        foreach ($atributos as $nombre => $valor) {
+            $hex = is_array($valor) ? ($valor['hex'] ?? null) : null;
+            $texto = trim((string) (is_array($valor) ? $valor['valor'] : $valor));
+            if ($texto === '') {
+                continue;
+            }
+
+            $atributo = $this->atributo($nombre, $hex || strcasecmp($nombre, 'Color') === 0 ? 'color' : 'texto', 0);
+            $ids[] = $atributo->valores()->firstOrCreate(['valor' => $texto], ['cod_hex' => $hex ?? ($atributo->tipo === 'color' ? '#C9A46A' : null)])->id;
+        }
+
+        return $ids;
     }
 }

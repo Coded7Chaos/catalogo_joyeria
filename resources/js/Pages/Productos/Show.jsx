@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Head, Link } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
+import { Link } from '@inertiajs/react';
 import CatalogoLayout from '@/Layouts/CatalogoLayout';
 import StoreImage from '@/Components/Store/StoreImage';
 import RailCard from '@/Components/Store/RailCard';
+import Seo from '@/Components/Store/Seo';
 import { ChevronLeft, ChevronRight, HeartIcon, WhatsAppIcon } from '@/Components/Store/Icons';
-import { contacto, formatPrice, whatsappUrl } from '@/lib/catalogo';
+import { categoriaUrl, contacto, etiquetaVariante, formatPrice, whatsappUrl } from '@/lib/catalogo';
 
 function Availability({ stock }) {
     if (stock <= 0) {
@@ -29,58 +30,102 @@ function Availability({ stock }) {
     );
 }
 
-export default function Show({ producto, relacionados }) {
-    const variantes = producto.variantes ?? [];
-    const images = [...new Set(variantes.map((v) => v.url_foto).filter(Boolean))];
+/** Photos of a variant: its gallery, or its cover for data saved before galleries existed. */
+const fotosDe = (v) => {
+    const fotos = (v?.imagenes ?? []).map((img) => ({ url: img.url, alt: img.alt }));
+    return fotos.length ? fotos : v?.url_foto ? [{ url: v.url_foto, alt: null }] : [];
+};
 
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [selectedVariante, setSelectedVariante] = useState(variantes[0]?.id || null);
+/** {atributoId: valorId} of a variant. */
+const seleccionDe = (v) => Object.fromEntries((v?.valores ?? []).map((val) => [val.id_atributo, val.id]));
+
+export default function Show({ producto, ruta = [], relacionados, seo }) {
+    const variantes = producto.variantes ?? [];
+
+    // The attributes this product varies on (e.g. Color and Talla), each with the values it comes in.
+    const atributos = useMemo(() => {
+        const mapa = new Map();
+        for (const v of variantes) {
+            for (const val of v.valores ?? []) {
+                const a = val.atributo;
+                if (!a) continue;
+                if (!mapa.has(a.id)) mapa.set(a.id, { ...a, valores: new Map() });
+                mapa.get(a.id).valores.set(val.id, val);
+            }
+        }
+        return [...mapa.values()]
+            .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0) || a.nombre.localeCompare(b.nombre))
+            .map((a) => ({ ...a, valores: [...a.valores.values()].sort((x, y) => (x.orden ?? 0) - (y.orden ?? 0)) }));
+    }, [variantes]);
+
+    const [seleccion, setSeleccion] = useState(() => seleccionDe(variantes[0]));
+    const [fotoIndex, setFotoIndex] = useState(0);
     const [saved, setSaved] = useState(false);
 
-    const variante = variantes.find((v) => v.id === selectedVariante) ?? null;
+    const coincide = (v, sel) => Object.entries(sel).every(([a, val]) => seleccionDe(v)[a] === val);
+    const variante = variantes.find((v) => coincide(v, seleccion)) ?? variantes[0] ?? null;
 
-    const selectVariante = (v) => {
-        const isDeselecting = selectedVariante === v.id;
-        setSelectedVariante(isDeselecting ? null : v.id);
-        if (!isDeselecting && v.url_foto) {
-            const imgIndex = images.indexOf(v.url_foto);
-            if (imgIndex !== -1) setCurrentImageIndex(imgIndex);
-        }
+    const elegir = (atributoId, valorId) => {
+        const nueva = { ...seleccion, [atributoId]: valorId };
+        // If that combination doesn't exist, jump to the first variant with the chosen value.
+        const destino = variantes.find((v) => coincide(v, nueva)) ?? variantes.find((v) => seleccionDe(v)[atributoId] === valorId);
+        setSeleccion(destino ? seleccionDe(destino) : nueva);
+        setFotoIndex(0);
     };
+
+    // The chosen variant's photos first, then the rest of the product's (without repeats).
+    const fotos = useMemo(() => {
+        const vistas = new Set();
+        return [variante, ...variantes.filter((v) => v !== variante)]
+            .flatMap(fotosDe)
+            .filter((f) => !vistas.has(f.url) && vistas.add(f.url));
+    }, [variante, variantes]);
+    const foto = fotos[fotoIndex] ?? fotos[0];
+
+    const disponible = (atributoId, valorId) =>
+        variantes.some((v) => coincide(v, { ...seleccion, [atributoId]: valorId }));
 
     const prices = variantes.map((v) => parseFloat(v.precio)).filter((p) => !isNaN(p));
     const minPrice = prices.length > 0 ? Math.min(...prices) : null;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
 
-    const prevImage = () => setCurrentImageIndex((i) => (i === 0 ? images.length - 1 : i - 1));
-    const nextImage = () => setCurrentImageIndex((i) => (i === images.length - 1 ? 0 : i + 1));
+    const mensaje = `Hola, me interesa: ${producto.nombre}${variante?.valores?.length ? ` (${etiquetaVariante(variante)})` : ''}`;
 
-    const mensaje = `Hola, me interesa: ${producto.nombre}`;
+    const prev = () => setFotoIndex((i) => (i === 0 ? fotos.length - 1 : i - 1));
+    const next = () => setFotoIndex((i) => (i >= fotos.length - 1 ? 0 : i + 1));
 
     return (
         <CatalogoLayout>
-            <Head title={producto.nombre} />
+            <Seo seo={seo} />
 
             <div className="mx-auto max-w-[1440px] px-5 pb-16 pt-8 sm:px-8 lg:pb-24 lg:pt-10">
                 {/* Breadcrumb */}
-                <nav aria-label="Ruta" className="flex flex-wrap items-center gap-2 text-[13px] uppercase tracking-[0.16em] text-tinta/55">
-                    <Link href="/" className="hover:text-vino">
-                        Inicio
-                    </Link>
-                    <span>/</span>
-                    <Link href="/catalogo" className="hover:text-vino">
-                        Catálogo
-                    </Link>
-                    {producto.categoria && (
-                        <>
-                            <span>/</span>
-                            <Link href={`/catalogo?id_categoria=${producto.id_categoria}`} className="hover:text-vino">
-                                {producto.categoria.categoria}
+                <nav aria-label="Ruta">
+                    <ol className="flex flex-wrap items-center gap-2 text-[13px] uppercase tracking-[0.16em] text-tinta/55">
+                        <li>
+                            <Link href="/" className="hover:text-vino">
+                                Inicio
                             </Link>
-                        </>
-                    )}
-                    <span>/</span>
-                    <span className="truncate text-tinta">{producto.nombre}</span>
+                        </li>
+                        <li aria-hidden="true">/</li>
+                        <li>
+                            <Link href="/catalogo" className="hover:text-vino">
+                                Catálogo
+                            </Link>
+                        </li>
+                        {ruta.map((c) => (
+                            <li key={c.slug} className="flex items-center gap-2">
+                                <span aria-hidden="true">/</span>
+                                <Link href={categoriaUrl(c)} className="hover:text-vino">
+                                    {c.categoria}
+                                </Link>
+                            </li>
+                        ))}
+                        <li aria-hidden="true">/</li>
+                        <li aria-current="page" className="truncate text-tinta">
+                            {producto.nombre}
+                        </li>
+                    </ol>
                 </nav>
 
                 <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-14">
@@ -88,50 +133,51 @@ export default function Show({ producto, relacionados }) {
                     <div>
                         <div className="relative aspect-[4/5] overflow-hidden rounded-[28px] bg-rosa">
                             <StoreImage
-                                key={images[currentImageIndex] ?? 'sin-foto'}
-                                src={images[currentImageIndex]}
-                                alt={producto.nombre}
+                                key={foto?.url ?? 'sin-foto'}
+                                src={foto?.url}
+                                alt={foto?.alt || `${producto.nombre}${variante?.valores?.length ? ` · ${etiquetaVariante(variante)}` : ''}`}
+                                fetchpriority="high"
                                 className="absolute inset-0 h-full w-full animate-rise object-cover"
                             />
-                            {images.length > 1 && (
+                            {fotos.length > 1 && (
                                 <>
                                     <button
-                                        onClick={prevImage}
+                                        onClick={prev}
                                         aria-label="Foto anterior"
                                         className="absolute left-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-tinta shadow-md transition hover:bg-vino hover:text-white"
                                     >
                                         <ChevronLeft />
                                     </button>
                                     <button
-                                        onClick={nextImage}
+                                        onClick={next}
                                         aria-label="Foto siguiente"
                                         className="absolute right-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-tinta shadow-md transition hover:bg-vino hover:text-white"
                                     >
                                         <ChevronRight />
                                     </button>
                                     <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2">
-                                        {images.map((_, i) => (
+                                        {fotos.map((f, i) => (
                                             <span
-                                                key={i}
-                                                className={`h-2 rounded-full transition-all ${i === currentImageIndex ? 'w-6 bg-white' : 'w-2 bg-white/50'}`}
+                                                key={f.url}
+                                                className={`h-2 rounded-full transition-all ${i === fotoIndex ? 'w-6 bg-white' : 'w-2 bg-white/50'}`}
                                             />
                                         ))}
                                     </div>
                                 </>
                             )}
                         </div>
-                        {images.length > 1 && (
+                        {fotos.length > 1 && (
                             <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto">
-                                {images.map((src, i) => (
+                                {fotos.map((f, i) => (
                                     <button
-                                        key={src}
-                                        onClick={() => setCurrentImageIndex(i)}
+                                        key={f.url}
+                                        onClick={() => setFotoIndex(i)}
                                         aria-label={`Ver foto ${i + 1}`}
                                         className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-[14px] bg-rosa ring-2 transition ${
-                                            i === currentImageIndex ? 'ring-vino' : 'ring-transparent hover:ring-vino/30'
+                                            i === fotoIndex ? 'ring-vino' : 'ring-transparent hover:ring-vino/30'
                                         }`}
                                     >
-                                        <StoreImage src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                                        <StoreImage src={f.url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
                                     </button>
                                 ))}
                             </div>
@@ -165,42 +211,60 @@ export default function Show({ producto, relacionados }) {
                             </div>
                         )}
 
-                        {variantes.length > 0 && (
-                            <div className="mt-8">
-                                <p className="text-[11px] uppercase tracking-[0.2em] text-tinta/55">Opciones disponibles</p>
+                        {producto.descripcion && (
+                            <p className="mt-6 whitespace-pre-line text-[15px] leading-relaxed text-tinta/75">{producto.descripcion}</p>
+                        )}
+
+                        {atributos.map((a) => (
+                            <div key={a.id} className="mt-7">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-tinta/55">
+                                    {a.nombre}
+                                    {seleccion[a.id] && (
+                                        <span className="ml-2 normal-case tracking-normal text-tinta">
+                                            {a.valores.find((v) => v.id === seleccion[a.id])?.valor}
+                                        </span>
+                                    )}
+                                </p>
                                 <div className="mt-3 flex flex-wrap gap-2">
-                                    {variantes.map((v) => {
-                                        const color = v.colores?.[0];
-                                        const selected = v.id === selectedVariante;
-                                        return (
+                                    {a.valores.map((val) => {
+                                        const on = seleccion[a.id] === val.id;
+                                        const existe = disponible(a.id, val.id);
+                                        return a.tipo === 'color' ? (
                                             <button
-                                                key={v.id}
+                                                key={val.id}
                                                 type="button"
-                                                onClick={() => selectVariante(v)}
-                                                aria-pressed={selected}
-                                                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors ${
-                                                    selected ? 'border-vino bg-vino text-white' : 'border-tinta/15 text-tinta hover:border-vino'
-                                                }`}
+                                                onClick={() => elegir(a.id, val.id)}
+                                                aria-pressed={on}
+                                                aria-label={val.valor}
+                                                title={val.valor}
+                                                className={`h-10 w-10 rounded-full ring-offset-2 transition-all ${
+                                                    on ? 'ring-2 ring-vino' : 'ring-1 ring-tinta/15 hover:ring-vino/40'
+                                                } ${existe ? '' : 'opacity-40'}`}
+                                                style={{ backgroundColor: val.cod_hex || '#e5e0d8' }}
+                                            />
+                                        ) : (
+                                            <button
+                                                key={val.id}
+                                                type="button"
+                                                onClick={() => elegir(a.id, val.id)}
+                                                aria-pressed={on}
+                                                className={`min-w-[48px] rounded-full border px-4 py-2 text-sm transition-colors ${
+                                                    on ? 'border-vino bg-vino text-white' : 'border-tinta/15 text-tinta hover:border-vino'
+                                                } ${existe ? '' : 'border-dashed opacity-50'}`}
                                             >
-                                                {color && (
-                                                    <span
-                                                        className="h-3.5 w-3.5 rounded-full ring-1 ring-white/60"
-                                                        style={{ backgroundColor: color.cod_hex }}
-                                                    />
-                                                )}
-                                                {color?.color ?? 'Estándar'} · Talla {v.talla?.talla ?? 'Única'}
+                                                {val.valor}
                                             </button>
                                         );
                                     })}
                                 </div>
                             </div>
-                        )}
+                        ))}
 
                         <dl className="mt-8 divide-y divide-humo border-y border-humo text-sm">
                             <div className="flex justify-between gap-4 py-3">
                                 <dt className="text-tinta/55">Disponibilidad</dt>
                                 <dd className="flex items-center gap-2">
-                                    {variante ? <Availability stock={variante.stock} /> : 'Elige una opción'}
+                                    {variante ? <Availability stock={variante.stock} /> : 'Agotado'}
                                 </dd>
                             </div>
                             {variante?.sku && (
