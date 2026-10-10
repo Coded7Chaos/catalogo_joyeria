@@ -1,109 +1,163 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import CatalogoLayout from '@/Layouts/CatalogoLayout';
+import StoreImage from '@/Components/Store/StoreImage';
+import RailCard from '@/Components/Store/RailCard';
+import { ChevronLeft, ChevronRight, HeartIcon, WhatsAppIcon } from '@/Components/Store/Icons';
+import { contacto, formatPrice, whatsappUrl } from '@/lib/catalogo';
+
+function Availability({ stock }) {
+    if (stock <= 0) {
+        return (
+            <>
+                <span className="h-2 w-2 rounded-full bg-vino-soft" /> Agotado
+            </>
+        );
+    }
+    if (stock <= 3) {
+        return (
+            <>
+                <span className="h-2 w-2 rounded-full bg-champan" />
+                {stock === 1 ? 'Última unidad' : `Quedan ${stock}`}
+            </>
+        );
+    }
+    return (
+        <>
+            <span className="h-2 w-2 rounded-full bg-emerald-600" /> En stock
+        </>
+    );
+}
 
 export default function Show({ producto, relacionados }) {
-    const allImages = producto.variantes
-        .map(v => v.url_foto)
-        .filter(img => img !== null && img !== '' && img !== undefined);
+    const variantes = producto.variantes ?? [];
+    const images = [...new Set(variantes.map((v) => v.url_foto).filter(Boolean))];
 
-    const uniqueImages = [...new Set(allImages)];
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [selectedVariante, setSelectedVariante] = useState(producto.variantes[0]?.id || null);
+    const [selectedVariante, setSelectedVariante] = useState(variantes[0]?.id || null);
+    const [saved, setSaved] = useState(false);
 
-    const selectVariante = (variante) => {
-        const isDeselecting = selectedVariante === variante.id;
-        setSelectedVariante(isDeselecting ? null : variante.id);
-        if (!isDeselecting && variante.url_foto) {
-            const imgIndex = uniqueImages.indexOf(variante.url_foto);
+    const variante = variantes.find((v) => v.id === selectedVariante) ?? null;
+
+    const selectVariante = (v) => {
+        const isDeselecting = selectedVariante === v.id;
+        setSelectedVariante(isDeselecting ? null : v.id);
+        if (!isDeselecting && v.url_foto) {
+            const imgIndex = images.indexOf(v.url_foto);
             if (imgIndex !== -1) setCurrentImageIndex(imgIndex);
         }
     };
 
-    const prices = producto.variantes.map(v => parseFloat(v.precio)).filter(p => !isNaN(p));
+    const prices = variantes.map((v) => parseFloat(v.precio)).filter((p) => !isNaN(p));
     const minPrice = prices.length > 0 ? Math.min(...prices) : null;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
+
+    const prevImage = () => setCurrentImageIndex((i) => (i === 0 ? images.length - 1 : i - 1));
+    const nextImage = () => setCurrentImageIndex((i) => (i === images.length - 1 ? 0 : i + 1));
+
+    const mensaje = `Hola, me interesa: ${producto.nombre}`;
 
     return (
         <CatalogoLayout>
             <Head title={producto.nombre} />
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="mx-auto max-w-[1440px] px-5 pb-16 pt-8 sm:px-8 lg:pb-24 lg:pt-10">
                 {/* Breadcrumb */}
-                <nav className="flex items-center text-sm mb-8">
-                    <Link href="/" className="text-joya-gray hover:text-joya-gold transition-colors">
+                <nav aria-label="Ruta" className="flex flex-wrap items-center gap-2 text-[13px] uppercase tracking-[0.16em] text-tinta/55">
+                    <Link href="/" className="hover:text-vino">
                         Inicio
                     </Link>
-                    <svg className="w-4 h-4 text-joya-border mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                    <Link href="/catalogo" className="text-joya-gray hover:text-joya-gold transition-colors">
+                    <span>/</span>
+                    <Link href="/catalogo" className="hover:text-vino">
                         Catálogo
                     </Link>
-                    <svg className="w-4 h-4 text-joya-border mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                    <span className="text-joya-black font-medium truncate">{producto.nombre}</span>
+                    {producto.categoria && (
+                        <>
+                            <span>/</span>
+                            <Link href={`/catalogo?id_categoria=${producto.id_categoria}`} className="hover:text-vino">
+                                {producto.categoria.categoria}
+                            </Link>
+                        </>
+                    )}
+                    <span>/</span>
+                    <span className="truncate text-tinta">{producto.nombre}</span>
                 </nav>
 
-                {/* Product Detail */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    {/* Left: Image Gallery */}
+                <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-14">
+                    {/* Gallery */}
                     <div>
-                        {/* Main Image */}
-                        <div className="aspect-square bg-white border border-joya-border rounded-lg overflow-hidden mb-4">
-                            <img
-                                src={uniqueImages[currentImageIndex] || '/placeholder.jpg'}
+                        <div className="relative aspect-[4/5] overflow-hidden rounded-[28px] bg-rosa">
+                            <StoreImage
+                                key={images[currentImageIndex] ?? 'sin-foto'}
+                                src={images[currentImageIndex]}
                                 alt={producto.nombre}
-                                className="w-full h-full object-contain"
+                                className="absolute inset-0 h-full w-full animate-rise object-cover"
                             />
-                        </div>
-
-                        {/* Thumbnails */}
-                        {uniqueImages.length > 1 && (
-                            <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2">
-                                {uniqueImages.map((img, idx) => (
+                            {images.length > 1 && (
+                                <>
                                     <button
-                                        key={idx}
-                                        onClick={() => setCurrentImageIndex(idx)}
-                                        className={`w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
-                                            idx === currentImageIndex
-                                                ? 'border-joya-gold'
-                                                : 'border-joya-border hover:border-joya-gray'
+                                        onClick={prevImage}
+                                        aria-label="Foto anterior"
+                                        className="absolute left-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-tinta shadow-md transition hover:bg-vino hover:text-white"
+                                    >
+                                        <ChevronLeft />
+                                    </button>
+                                    <button
+                                        onClick={nextImage}
+                                        aria-label="Foto siguiente"
+                                        className="absolute right-4 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-tinta shadow-md transition hover:bg-vino hover:text-white"
+                                    >
+                                        <ChevronRight />
+                                    </button>
+                                    <div className="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2">
+                                        {images.map((_, i) => (
+                                            <span
+                                                key={i}
+                                                className={`h-2 rounded-full transition-all ${i === currentImageIndex ? 'w-6 bg-white' : 'w-2 bg-white/50'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        {images.length > 1 && (
+                            <div className="no-scrollbar mt-4 flex gap-3 overflow-x-auto">
+                                {images.map((src, i) => (
+                                    <button
+                                        key={src}
+                                        onClick={() => setCurrentImageIndex(i)}
+                                        aria-label={`Ver foto ${i + 1}`}
+                                        className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-[14px] bg-rosa ring-2 transition ${
+                                            i === currentImageIndex ? 'ring-vino' : 'ring-transparent hover:ring-vino/30'
                                         }`}
                                     >
-                                        <img
-                                            src={img}
-                                            alt={`${producto.nombre} ${idx + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
+                                        <StoreImage src={src} alt="" className="absolute inset-0 h-full w-full object-cover" />
                                     </button>
                                 ))}
                             </div>
                         )}
                     </div>
 
-                    {/* Right: Product Info */}
-                    <div>
-                        {/* Category */}
+                    {/* Info */}
+                    <div className="flex flex-col lg:py-4">
                         {producto.categoria && (
-                            <p className="text-joya-gold text-sm uppercase tracking-wider font-medium mb-2">
-                                {producto.categoria.categoria}
-                            </p>
+                            <p className="text-[11px] uppercase tracking-[0.2em] text-vino-soft">{producto.categoria.categoria}</p>
                         )}
+                        <h1 className="mt-2 font-display text-[40px] font-normal leading-[1.05] text-tinta sm:text-[52px]">{producto.nombre}</h1>
+                        <p className="mt-4 text-2xl font-medium text-vino">
+                            {variante
+                                ? formatPrice(variante.precio)
+                                : minPrice != null
+                                  ? `${formatPrice(minPrice)}${maxPrice !== minPrice ? ` – ${formatPrice(maxPrice)}` : ''}`
+                                  : 'Consultar'}
+                        </p>
 
-                        {/* Name */}
-                        <h1 className="text-3xl font-bold text-joya-black mb-4">
-                            {producto.nombre}
-                        </h1>
-
-                        {/* Tags */}
-                        {producto.tags && producto.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-2 mb-6">
-                                {producto.tags.map(tag => (
+                        {producto.tags?.length > 0 && (
+                            <div className="mt-5 flex flex-wrap gap-2">
+                                {producto.tags.map((tag) => (
                                     <span
                                         key={tag.id}
-                                        className="px-3 py-1 text-xs border border-joya-gold text-joya-gold uppercase tracking-wider font-medium"
+                                        className="rounded-full bg-rosa px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-vino"
                                     >
                                         {tag.descripcion}
                                     </span>
@@ -111,180 +165,99 @@ export default function Show({ producto, relacionados }) {
                             </div>
                         )}
 
-                        {/* Price range */}
-                        <div className="border-t border-b border-joya-border py-4 mb-6">
-                            {minPrice && (
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-2xl font-bold text-joya-black">
-                                        Bs. {minPrice.toFixed(2)}
-                                    </span>
-                                    {maxPrice && maxPrice !== minPrice && (
-                                        <span className="text-joya-gray text-sm">
-                                            — Bs. {maxPrice.toFixed(2)}
-                                        </span>
-                                    )}
+                        {variantes.length > 0 && (
+                            <div className="mt-8">
+                                <p className="text-[11px] uppercase tracking-[0.2em] text-tinta/55">Opciones disponibles</p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {variantes.map((v) => {
+                                        const color = v.colores?.[0];
+                                        const selected = v.id === selectedVariante;
+                                        return (
+                                            <button
+                                                key={v.id}
+                                                type="button"
+                                                onClick={() => selectVariante(v)}
+                                                aria-pressed={selected}
+                                                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors ${
+                                                    selected ? 'border-vino bg-vino text-white' : 'border-tinta/15 text-tinta hover:border-vino'
+                                                }`}
+                                            >
+                                                {color && (
+                                                    <span
+                                                        className="h-3.5 w-3.5 rounded-full ring-1 ring-white/60"
+                                                        style={{ backgroundColor: color.cod_hex }}
+                                                    />
+                                                )}
+                                                {color?.color ?? 'Estándar'} · Talla {v.talla?.talla ?? 'Única'}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        <dl className="mt-8 divide-y divide-humo border-y border-humo text-sm">
+                            <div className="flex justify-between gap-4 py-3">
+                                <dt className="text-tinta/55">Disponibilidad</dt>
+                                <dd className="flex items-center gap-2">
+                                    {variante ? <Availability stock={variante.stock} /> : 'Elige una opción'}
+                                </dd>
+                            </div>
+                            {variante?.sku && (
+                                <div className="flex justify-between gap-4 py-3">
+                                    <dt className="text-tinta/55">SKU</dt>
+                                    <dd>{variante.sku}</dd>
                                 </div>
                             )}
-                        </div>
-
-                        {/* Variants */}
-                        <div className="mb-8">
-                            <h3 className="text-sm uppercase tracking-wider text-joya-gray font-semibold mb-4">
-                                Opciones disponibles
-                            </h3>
-                            <div className="space-y-3">
-                                {producto.variantes.map((variante) => (
-                                    <button
-                                        key={variante.id}
-                                        onClick={() => selectVariante(variante)}
-                                        className={`w-full text-left p-4 rounded-lg border transition-all ${
-                                            selectedVariante === variante.id
-                                                ? 'border-joya-gold bg-joya-gold/5'
-                                                : 'border-joya-border hover:border-joya-gold'
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                {/* Color swatch */}
-                                                {variante.colores && variante.colores.length > 0 ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <div
-                                                            className="w-8 h-8 rounded-full border border-joya-border"
-                                                            style={{ backgroundColor: variante.colores[0].cod_hex }}
-                                                            title={variante.colores[0].color}
-                                                        />
-                                                        <span className="text-sm text-joya-black font-medium">
-                                                            {variante.colores[0].color}
-                                                        </span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-sm text-joya-gray">Estándar</span>
-                                                )}
-
-                                                {/* Separator */}
-                                                <span className="text-joya-border">|</span>
-
-                                                {/* Talla */}
-                                                <span className="text-sm text-joya-gray">
-                                                    Talla: <span className="text-joya-black font-medium">{variante.talla?.talla || 'Única'}</span>
-                                                </span>
-                                            </div>
-
-                                            <div className="text-right">
-                                                <p className="font-bold text-joya-black text-lg">
-                                                    Bs. {parseFloat(variante.precio).toFixed(2)}
-                                                </p>
-                                                {variante.stock === 1 && (
-                                                    <p className="text-xs text-red-500 font-medium">
-                                                        Última unidad
-                                                    </p>
-                                                )}
-                                                {variante.stock > 1 && variante.stock <= 3 && (
-                                                    <p className="text-xs text-joya-gold font-medium">
-                                                        Quedan {variante.stock}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                        </dl>
 
                         {/* Contact CTA */}
-                        <div className="bg-joya-cream rounded-lg p-6">
-                            <p className="text-sm text-joya-gray mb-1 text-center">¿Te interesa esta pieza?</p>
-                            <p className="text-joya-black font-medium mb-4 text-center">Contáctanos por WhatsApp</p>
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                <a
-                                    href={`https://wa.me/59173059904?text=${encodeURIComponent(`Hola, me interesa: ${producto.nombre}`)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 text-white py-3 px-4 rounded-lg font-medium text-sm hover:bg-green-700 transition-colors"
+                        <div className="mt-8">
+                            <p className="font-display text-[22px] leading-tight">¿Te interesa esta pieza?</p>
+                            <p className="mt-1 text-sm text-tinta/60">Escríbenos por WhatsApp y te ayudamos.</p>
+                            <div className="mt-4 flex gap-3">
+                                {contacto.whatsapp.map((numero) => (
+                                    <a
+                                        key={numero}
+                                        href={whatsappUrl(numero, mensaje)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full bg-vino px-5 text-[15px] font-medium text-white transition-colors hover:bg-vino-deep"
+                                    >
+                                        <WhatsAppIcon width={18} height={18} />
+                                        {numero}
+                                    </a>
+                                ))}
+                                <button
+                                    onClick={() => setSaved((s) => !s)}
+                                    aria-label={saved ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+                                    aria-pressed={saved}
+                                    className={`grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full border transition-colors ${
+                                        saved ? 'border-vino bg-vino text-white' : 'border-tinta/15 text-vino hover:border-vino'
+                                    }`}
                                 >
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                                    73059904
-                                </a>
-                                <a
-                                    href={`https://wa.me/59173707000?text=${encodeURIComponent(`Hola, me interesa: ${producto.nombre}`)}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 text-white py-3 px-4 rounded-lg font-medium text-sm hover:bg-green-700 transition-colors"
-                                >
-                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                                    73707000
-                                </a>
+                                    <HeartIcon filled={saved} width={20} height={20} />
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Related Products */}
-                {relacionados && relacionados.length > 0 && (
-                    <section className="mt-20 border-t border-joya-border pt-12">
-                        <div className="flex items-end justify-between mb-8">
-                            <div>
-                                <p className="text-joya-gold text-sm uppercase tracking-[0.2em] mb-1 font-medium">Descubre más</p>
-                                <h2 className="text-2xl font-bold text-joya-black">
-                                    También te podría interesar
-                                </h2>
-                            </div>
-                            <Link
-                                href="/catalogo"
-                                className="hidden sm:inline-flex items-center text-joya-gold text-sm font-medium hover:text-joya-gold-hover transition-colors"
-                            >
+                {/* Related products */}
+                {relacionados?.length > 0 && (
+                    <section className="mt-20 border-t border-vino/10 pt-14">
+                        <div className="flex items-end justify-between gap-6">
+                            <h2 className="font-display text-[40px] font-normal leading-none text-tinta sm:text-[52px]">
+                                También <em>te podría</em> gustar
+                            </h2>
+                            <Link href="/catalogo" className="hidden shrink-0 text-sm text-vino underline underline-offset-4 sm:inline">
                                 Ver catálogo
-                                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
                             </Link>
                         </div>
-
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                            {relacionados.map((rel) => {
-                                const relColors = rel.variantes?.flatMap(v => v.colores || []) || [];
-                                const relUniqueColors = [...new Map(relColors.map(c => [c.cod_hex, c])).values()];
-                                const relPrices = rel.variantes?.map(v => parseFloat(v.precio)).filter(p => !isNaN(p)) || [];
-                                const relMinPrice = relPrices.length > 0 ? Math.min(...relPrices) : null;
-
-                                return (
-                                    <Link
-                                        key={rel.id}
-                                        href={`/catalogo/${rel.id}`}
-                                        className="group bg-white border border-joya-border rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300"
-                                    >
-                                        <div className="aspect-square overflow-hidden bg-joya-cream">
-                                            <img
-                                                src={rel.variantes?.[0]?.url_foto || '/placeholder.jpg'}
-                                                alt={rel.nombre}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            />
-                                        </div>
-                                        <div className="p-4">
-                                            <h3 className="font-semibold text-joya-black text-sm leading-tight mb-2 line-clamp-2">
-                                                {rel.nombre}
-                                            </h3>
-                                            <div className="flex items-center gap-1.5 mb-2">
-                                                {relUniqueColors.slice(0, 3).map(color => (
-                                                    <div
-                                                        key={color.id}
-                                                        className="w-3 h-3 rounded-full border border-joya-border"
-                                                        style={{ backgroundColor: color.cod_hex }}
-                                                    />
-                                                ))}
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="font-bold text-joya-black">
-                                                    {relMinPrice ? `Bs. ${relMinPrice.toFixed(2)}` : 'Consultar'}
-                                                </span>
-                                                <span className="text-joya-gold text-xs font-medium">
-                                                    Ver →
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                );
-                            })}
+                        <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-5 lg:grid-cols-4">
+                            {relacionados.map((rel) => (
+                                <RailCard key={rel.id} producto={rel} />
+                            ))}
                         </div>
                     </section>
                 )}

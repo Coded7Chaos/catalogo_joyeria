@@ -9,7 +9,8 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300..700&family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..500&family=IM+Fell+French+Canon&family=Hind+Mysuru:wght@300;400&family=Holtwood+One+SC&family=Homemade+Apple&family=Hubballi&display=swap" rel="stylesheet">
+        <meta name="theme-color" content="#53131e">
 
         <!-- Scripts -->
         @routes

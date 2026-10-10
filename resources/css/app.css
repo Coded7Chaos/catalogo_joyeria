@@ -1,8 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply text-tinta;
+    }
+}
+
+@layer utilities {
+    .no-scrollbar {
+        scrollbar-width: none;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+}
 
 /* Scrollbar elegante */
 .custom-scrollbar::-webkit-scrollbar {
@@ -15,12 +32,12 @@
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #C8A96E;
+    background: #c9a46a;
     border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #B8944F;
+    background: #a9834a;
 }
 
 /* Animaciones sutiles */
@@ -43,3 +60,13 @@
 .animate-delay-200 { animation-delay: 0.2s; }
 .animate-delay-300 { animation-delay: 0.3s; }
 .animate-delay-400 { animation-delay: 0.4s; }
+
+/* Progress ring of the active hero slide (used from an inline style) */
+@keyframes dot-fill {
+    from {
+        stroke-dashoffset: 63;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}

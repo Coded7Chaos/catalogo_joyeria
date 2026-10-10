@@ -33,7 +33,7 @@ export default function Usuarios({ usuarios, filtros }) {
         <AdminLayout title="Usuarios" active="usuarios">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
                 <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-joya-black">Usuarios</h1>
+                    <h1 className="font-display text-[40px] font-normal leading-none text-tinta">Usuarios</h1>
                     <p className="text-joya-gray text-sm mt-1">{usuarios.total} usuario{usuarios.total !== 1 ? 's' : ''} registrado{usuarios.total !== 1 ? 's' : ''}</p>
                 </div>
 
@@ -41,10 +41,10 @@ export default function Usuarios({ usuarios, filtros }) {
                 {pageErrors?.error && <div className="mb-6 text-sm font-medium text-red-600 bg-red-50 border border-red-200 py-3 px-4 rounded-lg">{pageErrors.error}</div>}
 
                 <div className="mb-6">
-                    <input type="text" defaultValue={filtros.search || ''} onChange={(e) => handleSearch(e.target.value)} placeholder="Buscar por nombre o email..." className="w-full sm:max-w-sm border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold" />
+                    <input type="text" defaultValue={filtros.search || ''} onChange={(e) => handleSearch(e.target.value)} placeholder="Buscar por nombre o email..." className="w-full sm:max-w-sm border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
                 </div>
 
-                <div className="bg-white border border-joya-border rounded-lg overflow-hidden">
+                <div className="bg-white border border-joya-border rounded-[18px] overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
@@ -108,7 +108,7 @@ export default function Usuarios({ usuarios, filtros }) {
                             <p className="text-xs text-joya-gray">Mostrando {usuarios.from}–{usuarios.to} de {usuarios.total}</p>
                             <div className="flex gap-1">
                                 {usuarios.links.map((link, i) => (
-                                    <Link key={i} href={link.url || '#'} className={`px-3 py-1 text-xs rounded transition-colors ${link.active ? 'bg-joya-black text-white' : link.url ? 'text-joya-gray hover:text-joya-black' : 'text-joya-gray/30 cursor-default'}`} preserveState preserveScroll dangerouslySetInnerHTML={{ __html: link.label }} />
+                                    <Link key={i} href={link.url || '#'} className={`px-3 py-1 text-xs rounded transition-colors ${link.active ? 'bg-vino text-white' : link.url ? 'text-joya-gray hover:text-joya-black' : 'text-joya-gray/30 cursor-default'}`} preserveState preserveScroll dangerouslySetInnerHTML={{ __html: link.label }} />
                                 ))}
                             </div>
                         </div>
@@ -128,24 +128,24 @@ export default function Usuarios({ usuarios, filtros }) {
                         <form onSubmit={submitForm} className="p-6 space-y-5">
                             <div>
                                 <label className="text-sm font-medium text-joya-black block mb-1.5">Nombre</label>
-                                <input type="text" value={form.data.nombre} onChange={(e) => form.setData('nombre', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold" />
+                                <input type="text" value={form.data.nombre} onChange={(e) => form.setData('nombre', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
                                 {form.errors.nombre && <p className="text-red-500 text-xs mt-1">{form.errors.nombre}</p>}
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-joya-black block mb-1.5">Email</label>
-                                <input type="email" value={form.data.email} onChange={(e) => form.setData('email', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold" />
+                                <input type="email" value={form.data.email} onChange={(e) => form.setData('email', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25" />
                                 {form.errors.email && <p className="text-red-500 text-xs mt-1">{form.errors.email}</p>}
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-joya-black block mb-1.5">Rol</label>
-                                <select value={form.data.role} onChange={(e) => form.setData('role', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-joya-gold focus:ring-1 focus:ring-joya-gold">
+                                <select value={form.data.role} onChange={(e) => form.setData('role', e.target.value)} className="w-full border border-joya-border rounded-lg px-4 py-2.5 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25">
                                     <option value="cliente">Cliente</option>
                                     <option value="admin">Administrador</option>
                                 </select>
                                 {form.errors.role && <p className="text-red-500 text-xs mt-1">{form.errors.role}</p>}
                             </div>
                             <div className="flex gap-3 pt-2">
-                                <button type="submit" disabled={form.processing} className="flex-1 bg-joya-black text-white py-2.5 text-sm font-semibold uppercase tracking-wider hover:bg-joya-dark transition-colors disabled:opacity-50">
+                                <button type="submit" disabled={form.processing} className="flex-1 rounded-full bg-vino text-white py-2.5 text-sm font-semibold uppercase tracking-wider hover:bg-vino-deep transition-colors disabled:opacity-50">
                                     {form.processing ? 'Guardando...' : 'Actualizar'}
                                 </button>
                                 <button type="button" onClick={cancelEdit} className="px-5 py-2.5 text-sm border border-joya-border text-joya-gray hover:bg-gray-50 transition-colors">Cancelar</button>
