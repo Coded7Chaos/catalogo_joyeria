@@ -45,6 +45,7 @@ Route::middleware(['auth', IsAdmin::class])->prefix('admin')->group(function () 
 
     // Usuarios
     Route::get('/usuarios', [AdminController::class, 'usuarios'])->name('admin.usuarios');
+    Route::post('/usuarios', [AdminController::class, 'usuarioStore'])->name('admin.usuarios.store');
     Route::put('/usuarios/{id}', [AdminController::class, 'usuarioUpdate'])->name('admin.usuarios.update');
     Route::delete('/usuarios/{id}', [AdminController::class, 'usuarioDestroy'])->name('admin.usuarios.destroy');
 

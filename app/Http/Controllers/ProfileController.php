@@ -21,7 +21,11 @@ class ProfileController extends Controller
 
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $datos = $request->validated();
+        // La columna telefono no admite NULL: si lo dejan vacío se guarda como texto vacío.
+        $datos['telefono'] = trim((string) ($datos['telefono'] ?? ''));
+
+        $request->user()->fill($datos);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;

@@ -38,6 +38,12 @@ class NewPasswordController extends Controller
             'token' => 'required',
             'email' => 'required|email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'email.required' => 'Escribe tu correo electrónico.',
+            'email.email' => 'El correo electrónico no es válido.',
+            'password.required' => 'Escribe tu nueva contraseña.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'password.min' => 'La contraseña debe tener al menos :min caracteres.',
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we
@@ -59,11 +65,13 @@ class NewPasswordController extends Controller
         // the application's home authenticated view. If there is an error we can
         // redirect them back to where they came from with their error message.
         if ($status == Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('status', __($status));
+            return redirect()->route('login')->with('status', 'Tu contraseña se cambió correctamente. Ya puedes iniciar sesión.');
         }
 
         throw ValidationException::withMessages([
-            'email' => [trans($status)],
+            'email' => $status == Password::RESET_THROTTLED
+                ? 'Espera un momento antes de volver a intentarlo.'
+                : 'El enlace no es válido o ya venció, o el correo no coincide. Solicita un enlace nuevo.',
         ]);
     }
 }

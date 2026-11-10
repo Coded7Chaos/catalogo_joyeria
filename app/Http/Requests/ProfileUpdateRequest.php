@@ -8,6 +8,11 @@ use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
 {
+    public function messages(): array
+    {
+        return Cliente::MENSAJES_VALIDACION;
+    }
+
     public function rules(): array
     {
         return [
@@ -20,7 +25,7 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(Cliente::class)->ignore($this->user()->id),
             ],
-            'telefono' => ['nullable', 'string', 'max:20'],
+            'telefono' => ['nullable', 'string', 'max:20', 'regex:' . Cliente::REGEX_TELEFONO],
         ];
     }
 }

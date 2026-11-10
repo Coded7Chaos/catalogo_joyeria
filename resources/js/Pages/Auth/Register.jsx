@@ -1,10 +1,12 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import CatalogoLayout from '@/Layouts/CatalogoLayout';
+import PasswordInput from '@/Components/PasswordInput';
 
 export default function Register() {
     const { data, setData, post, processing, errors } = useForm({
         nombre: '',
         email: '',
+        telefono: '',
         password: '',
         password_confirmation: '',
     });
@@ -44,18 +46,26 @@ export default function Register() {
                         </div>
 
                         <div>
-                            <label className="mb-1.5 block text-[11px] uppercase tracking-[0.2em] text-tinta/60">Contraseña</label>
-                            <input type="password" value={data.password} onChange={(e) => setData('password', e.target.value)}
+                            <label className="mb-1.5 block text-[11px] uppercase tracking-[0.2em] text-tinta/60">Teléfono / WhatsApp</label>
+                            <input type="tel" value={data.telefono} onChange={(e) => setData('telefono', e.target.value)}
                                 className="w-full rounded-xl border border-joya-border px-4 py-3 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
-                                placeholder="Mínimo 8 caracteres" />
+                                placeholder="Ej. 71234567" autoComplete="tel" inputMode="tel" required />
+                            {errors.telefono && <p className="text-red-500 text-xs mt-1">{errors.telefono}</p>}
+                        </div>
+
+                        <div>
+                            <label className="mb-1.5 block text-[11px] uppercase tracking-[0.2em] text-tinta/60">Contraseña</label>
+                            <PasswordInput value={data.password} onChange={(e) => setData('password', e.target.value)}
+                                className="w-full rounded-xl border border-joya-border px-4 py-3 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
+                                placeholder="Mínimo 8 caracteres" autoComplete="new-password" />
                             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
                         </div>
 
                         <div>
                             <label className="mb-1.5 block text-[11px] uppercase tracking-[0.2em] text-tinta/60">Confirmar contraseña</label>
-                            <input type="password" value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)}
+                            <PasswordInput value={data.password_confirmation} onChange={(e) => setData('password_confirmation', e.target.value)}
                                 className="w-full rounded-xl border border-joya-border px-4 py-3 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
-                                placeholder="Repite tu contraseña" />
+                                placeholder="Repite tu contraseña" autoComplete="new-password" />
                             {errors.password_confirmation && <p className="text-red-500 text-xs mt-1">{errors.password_confirmation}</p>}
                         </div>
 
