@@ -1,5 +1,6 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import CatalogoLayout from '@/Layouts/CatalogoLayout';
+import PasswordInput from '@/Components/PasswordInput';
 import { useState } from 'react';
 
 export default function MiCuenta({ status }) {
@@ -150,8 +151,7 @@ export default function MiCuenta({ status }) {
                         <div className="space-y-5 max-w-lg">
                             <div>
                                 <label className="mb-1.5 block text-[11px] uppercase tracking-[0.2em] text-tinta/60">Contraseña actual</label>
-                                <input
-                                    type="password"
+                                <PasswordInput
                                     value={passwordForm.data.current_password}
                                     onChange={(e) => passwordForm.setData('current_password', e.target.value)}
                                     className="w-full rounded-xl border border-joya-border px-4 py-3 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
@@ -161,8 +161,7 @@ export default function MiCuenta({ status }) {
 
                             <div>
                                 <label className="mb-1.5 block text-[11px] uppercase tracking-[0.2em] text-tinta/60">Nueva contraseña</label>
-                                <input
-                                    type="password"
+                                <PasswordInput
                                     value={passwordForm.data.password}
                                     onChange={(e) => passwordForm.setData('password', e.target.value)}
                                     className="w-full rounded-xl border border-joya-border px-4 py-3 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
@@ -173,8 +172,7 @@ export default function MiCuenta({ status }) {
 
                             <div>
                                 <label className="mb-1.5 block text-[11px] uppercase tracking-[0.2em] text-tinta/60">Confirmar nueva contraseña</label>
-                                <input
-                                    type="password"
+                                <PasswordInput
                                     value={passwordForm.data.password_confirmation}
                                     onChange={(e) => passwordForm.setData('password_confirmation', e.target.value)}
                                     className="w-full rounded-xl border border-joya-border px-4 py-3 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"

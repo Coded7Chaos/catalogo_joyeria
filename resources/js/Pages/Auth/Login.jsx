@@ -1,5 +1,6 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import CatalogoLayout from '@/Layouts/CatalogoLayout';
+import PasswordInput from '@/Components/PasswordInput';
 
 export default function Login({ status }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -34,23 +35,28 @@ export default function Login({ status }) {
                             <label className="mb-1.5 block text-[11px] uppercase tracking-[0.2em] text-tinta/60">Correo electrónico</label>
                             <input type="email" value={data.email} onChange={(e) => setData('email', e.target.value)}
                                 className="w-full rounded-xl border border-joya-border px-4 py-3 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
-                                placeholder="tu@email.com" autoFocus />
+                                placeholder="tu@email.com" autoComplete="username" autoFocus />
                             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                         </div>
 
                         <div>
                             <label className="mb-1.5 block text-[11px] uppercase tracking-[0.2em] text-tinta/60">Contraseña</label>
-                            <input type="password" value={data.password} onChange={(e) => setData('password', e.target.value)}
+                            <PasswordInput value={data.password} onChange={(e) => setData('password', e.target.value)}
                                 className="w-full rounded-xl border border-joya-border px-4 py-3 text-sm focus:border-vino focus:ring-1 focus:ring-vino/25"
-                                placeholder="Tu contraseña" />
+                                placeholder="Tu contraseña" autoComplete="current-password" />
                             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
                         </div>
 
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" checked={data.remember} onChange={(e) => setData('remember', e.target.checked)}
-                                className="w-4 h-4 rounded border-joya-border text-joya-gold focus:ring-joya-gold" />
-                            <span className="text-sm text-joya-gray">Recordarme</span>
-                        </label>
+                        <div className="flex items-center justify-between gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" checked={data.remember} onChange={(e) => setData('remember', e.target.checked)}
+                                    className="w-4 h-4 rounded border-joya-border text-joya-gold focus:ring-joya-gold" />
+                                <span className="text-sm text-joya-gray">Recordarme</span>
+                            </label>
+                            <Link href="/forgot-password" className="text-sm text-vino hover:text-vino-deep underline-offset-4 hover:underline transition-colors">
+                                ¿Olvidaste tu contraseña?
+                            </Link>
+                        </div>
 
                         <button type="submit" disabled={processing}
                             className="w-full rounded-full bg-vino text-white py-3.5 text-[15px] font-medium hover:bg-vino-deep transition-colors disabled:opacity-50">

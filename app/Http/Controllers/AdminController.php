@@ -298,27 +298,69 @@ class AdminController extends Controller
     public function usuarios(Request $request)
     {
         $usuarios = Cliente::query()
-            ->when($request->input('search'), fn($q, $s) => $q->where('nombre', 'like', "%{$s}%")->orWhere('email', 'like', "%{$s}%"))
+            ->when($request->input('search'), fn($q, $s) => $q->where(fn($q) => $q
+                ->where('nombre', 'like', "%{$s}%")
+                ->orWhere('email', 'like', "%{$s}%")
+                ->orWhere('telefono', 'like', "%{$s}%")))
+            ->when(in_array($request->input('rol'), ['admin', 'cliente'], true), fn($q) => $q->where('role', $request->input('rol')))
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('Admin/Usuarios', [
             'usuarios' => $usuarios,
-            'filtros' => $request->only('search'),
+            'filtros' => $request->only('search', 'rol'),
         ]);
+    }
+
+    public function usuarioStore(Request $request)
+    {
+        $datos = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(Cliente::class)],
+            'telefono' => ['required', 'string', 'max:20', 'regex:' . Cliente::REGEX_TELEFONO],
+            'role' => 'required|in:cliente,admin',
+            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+        ], Cliente::MENSAJES_VALIDACION);
+
+        $usuario = new Cliente([
+            'nombre' => $datos['nombre'],
+            'email' => $datos['email'],
+            'telefono' => trim($datos['telefono']),
+            'password' => $datos['password'], // el modelo la guarda hasheada (cast 'hashed')
+        ]);
+        // role no se asigna masivamente desde formularios públicos; aquí lo decide un admin.
+        $usuario->role = $datos['role'];
+        $usuario->save();
+
+        $tipo = $usuario->role === 'admin' ? 'Administrador' : 'Usuario';
+
+        return back()->with('status', "{$tipo} \"{$usuario->nombre}\" creado correctamente.");
     }
 
     public function usuarioUpdate(Request $request, string $id)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'email' => 'required|email',
-            'role' => 'required|in:cliente,admin',
-        ]);
-
         $usuario = Cliente::findOrFail($id);
-        $usuario->update($request->only('nombre', 'email', 'role'));
+
+        $datos = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(Cliente::class)->ignore($usuario->id)],
+            'telefono' => ['nullable', 'string', 'max:20', 'regex:' . Cliente::REGEX_TELEFONO],
+            'role' => 'required|in:cliente,admin',
+        ], Cliente::MENSAJES_VALIDACION);
+
+        // Evita que un admin se quite el rol a sí mismo y se quede sin acceso al panel.
+        if ($usuario->id === auth()->id() && $datos['role'] !== 'admin') {
+            throw ValidationException::withMessages(['role' => 'No puedes quitarte el rol de administrador a ti mismo.']);
+        }
+
+        $usuario->fill([
+            'nombre' => $datos['nombre'],
+            'email' => $datos['email'],
+            'telefono' => trim((string) ($datos['telefono'] ?? '')),
+        ]);
+        $usuario->role = $datos['role'];
+        $usuario->save();
 
         return back()->with('status', 'Usuario actualizado correctamente.');
     }

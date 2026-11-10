@@ -25,15 +25,16 @@ class RegisteredUserController extends Controller
         $request->validate([
             'nombre' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:' . Cliente::class,
+            'telefono' => ['required', 'string', 'max:20', 'regex:' . Cliente::REGEX_TELEFONO],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+        ], Cliente::MENSAJES_VALIDACION);
 
         $user = Cliente::create([
             'nombre' => $request->nombre,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => 'cliente',
-            'telefono' => '',
+            'telefono' => trim($request->telefono),
         ]);
 
         event(new Registered($user));

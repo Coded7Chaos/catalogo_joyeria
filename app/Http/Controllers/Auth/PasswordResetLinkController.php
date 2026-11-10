@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -31,21 +32,27 @@ class PasswordResetLinkController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
+        ], [
+            'email.required' => 'Escribe tu correo electrónico.',
+            'email.email' => 'El correo electrónico no es válido.',
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        try {
+            Password::sendResetLink($request->only('email'));
+        } catch (\Throwable $e) {
+            // Normalmente es un problema de configuración del correo (MAIL_* en el .env).
+            Log::error('No se pudo enviar el correo de recuperación de contraseña', [
+                'email' => $request->input('email'),
+                'error' => $e->getMessage(),
+            ]);
 
-        if ($status == Password::RESET_LINK_SENT) {
-            return back()->with('status', __($status));
+            throw ValidationException::withMessages([
+                'email' => 'No pudimos enviar el correo en este momento. Inténtalo de nuevo más tarde.',
+            ]);
         }
 
-        throw ValidationException::withMessages([
-            'email' => [trans($status)],
-        ]);
+        // Siempre se responde lo mismo, exista o no la cuenta, para no revelar
+        // qué correos están registrados.
+        return back()->with('status', 'Si existe una cuenta con ese correo, te enviamos un enlace para cambiar tu contraseña. Revisa tu bandeja de entrada (y la carpeta de spam).');
     }
 }
