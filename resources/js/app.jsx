@@ -5,11 +5,22 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+import { MARCA } from './lib/catalogo';
+
+// El nombre de la tienda llega del servidor en la primera página (prop compartida `marca`).
+// No se usa VITE_APP_NAME porque el deploy compila sin .env y quedaría "Laravel".
+const paginaInicial = (() => {
+    try {
+        return JSON.parse(document.getElementById('app')?.dataset.page || '{}');
+    } catch {
+        return {};
+    }
+})();
+const appName = paginaInicial.props?.marca || MARCA;
 
 createInertiaApp({
     // Store pages send their full SEO title ("Producto | Tienda"); the rest get the app name.
-    title: (title) => (title.includes(' | ') ? title : `${title} - ${appName}`),
+    title: (title) => (title.includes(' | ') ? title : `${title} | ${appName}`),
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.jsx`,

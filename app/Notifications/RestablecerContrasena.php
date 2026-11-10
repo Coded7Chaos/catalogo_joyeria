@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Support\Seo;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Notifications\Messages\MailMessage;
 
@@ -16,12 +17,12 @@ class RestablecerContrasena extends ResetPassword
         $minutos = config('auth.passwords.' . config('auth.defaults.passwords') . '.expire', 60);
 
         return (new MailMessage)
-            ->subject('Restablece tu contraseña · ' . config('app.name'))
+            ->subject('Restablece tu contraseña · ' . Seo::sitio())
             ->greeting('¡Hola!')
             ->line('Recibimos una solicitud para restablecer la contraseña de tu cuenta.')
             ->action('Cambiar mi contraseña', $url)
             ->line("Este enlace vence en {$minutos} minutos.")
             ->line('Si no pediste este cambio, puedes ignorar este correo: tu contraseña seguirá siendo la misma.')
-            ->salutation('Saludos, ' . config('app.name'));
+            ->salutation('Saludos, ' . Seo::sitio());
     }
 }

@@ -31,6 +31,8 @@ class HandleInertiaRequests extends Middleware
                 'status' => fn () => $request->session()->get('status'),
             ],
             // Category tree for the store menus and filter tabs (cached, rebuilt when categories change).
+            // Nombre de la tienda (Admin → SEO o config/seo.php), usado en el logo y textos.
+            'marca' => fn () => \App\Support\Seo::sitio(),
             'categoriasMenu' => fn () => \App\Models\Categoria::menu(),
         ]);
     }

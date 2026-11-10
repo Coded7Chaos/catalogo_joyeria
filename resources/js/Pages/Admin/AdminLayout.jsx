@@ -1,4 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import Marca from '@/Components/Marca';
 import { useState } from 'react';
 
 const navItems = [
@@ -23,10 +24,10 @@ export default function AdminLayout({ children, title = 'Admin', active = '' }) 
             <header className="sticky top-0 z-50 bg-vino-deep text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
-                        <div className="flex items-center gap-4">
+                        <div className="flex shrink-0 items-center gap-4">
                             <Link href="/" className="flex items-center gap-3">
-                                <img src="/images/logo-192.webp" alt="Gilded" className="h-10 w-10 object-contain rounded-full" />
-                                <span className="hidden whitespace-nowrap font-brand text-[26px] leading-none tracking-[0.06em] sm:inline">GILDED</span>
+                                <img src="/images/logo-192.webp" alt="Qué elegancia la de Francia" className="h-10 w-10 object-contain rounded-full" />
+                                <span className="hidden 2xl:inline-flex"><Marca className="text-[18px]" /></span>
                             </Link>
                             <span className="rounded-full border border-champan/40 px-2.5 py-0.5 text-[11px] uppercase tracking-[0.2em] text-champan">Admin</span>
                         </div>

@@ -111,6 +111,25 @@ export const etiquetaVariante = (variante) =>
         .map((v) => v.valor)
         .join(' · ') || 'Estándar';
 
+/** Nombre de la tienda por defecto (el servidor envía el definitivo en la prop compartida `marca`). */
+export const MARCA = 'Qué elegancia la de Francia';
+
+/**
+ * Parte el nombre en dos líneas equilibradas para el logo de texto
+ * ("Qué elegancia" / "la de Francia"). Nombres de 1–2 palabras quedan en una línea.
+ */
+export const lineasMarca = (nombre = MARCA) => {
+    const palabras = nombre.trim().split(/\s+/);
+    if (palabras.length < 3) return [nombre];
+    let mejor = 1;
+    let diferencia = Infinity;
+    for (let i = 1; i < palabras.length; i++) {
+        const d = Math.abs(palabras.slice(0, i).join(' ').length - palabras.slice(i).join(' ').length);
+        if (d < diferencia) { diferencia = d; mejor = i; }
+    }
+    return [palabras.slice(0, mejor).join(' '), palabras.slice(mejor).join(' ')];
+};
+
 /** Datos de contacto de la tienda (pie de página y botones de WhatsApp). */
 export const contacto = {
     email: 'contacto@gilded.com',

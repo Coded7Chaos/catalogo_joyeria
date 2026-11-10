@@ -12,6 +12,7 @@ import {
     TikTokIcon,
 } from '@/Components/Store/Icons';
 import { categoriaUrl, contacto } from '@/lib/catalogo';
+import Marca, { useNombreMarca } from '@/Components/Marca';
 
 const whatsappHref = `https://wa.me/591${contacto.whatsapp[0]}`;
 
@@ -39,7 +40,7 @@ function Brand({ className = '', logoClassName = 'h-10 w-10' }) {
     return (
         <span className={`flex items-center gap-3 ${className}`}>
             <img src="/images/logo-192.webp" alt="" className={`shrink-0 rounded-full object-contain ${logoClassName}`} />
-            <span className="whitespace-nowrap font-brand leading-none tracking-[0.06em]">GILDED</span>
+            <Marca />
         </span>
     );
 }
@@ -56,6 +57,7 @@ export default function CatalogoLayout({ children, transparentHeader = false }) 
     const [scrolled, setScrolled] = useState(false);
     const [search, setSearch] = useState('');
     const { url, props } = usePage();
+    const marca = useNombreMarca();
     const user = props.auth?.user;
     const categoriasMenu = props.categoriasMenu ?? [];
     const userMenuRef = useRef(null);
@@ -165,8 +167,8 @@ export default function CatalogoLayout({ children, transparentHeader = false }) 
                     >
                         {mobileMenuOpen ? <CloseIcon width={26} height={26} /> : <MenuIcon />}
                     </button>
-                    <Link href="/" aria-label="Gilded, inicio">
-                        <Brand className="text-[26px] sm:text-[34px]" />
+                    <Link href="/" aria-label={`${marca}, inicio`}>
+                        <Brand className="text-[19px] sm:text-[24px]" />
                     </Link>
 
                     <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-5">
@@ -398,7 +400,7 @@ export default function CatalogoLayout({ children, transparentHeader = false }) 
             <footer className="bg-vino-deep text-white">
                 <div className="mx-auto grid max-w-[1440px] gap-12 px-5 py-16 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
                     <div>
-                        <Brand className="text-[32px] sm:text-[40px]" logoClassName="h-12 w-12" />
+                        <Brand className="text-[26px] sm:text-[32px]" logoClassName="h-12 w-12" />
                         <p className="mt-5 max-w-sm text-white/65">
                             Joyería exclusiva con diseños únicos que reflejan tu estilo personal. Calidad premium en cada pieza.
                         </p>
@@ -466,7 +468,7 @@ export default function CatalogoLayout({ children, transparentHeader = false }) 
                     </div>
                 </div>
                 <div className="border-t border-white/10 py-6 text-center text-xs text-white/45">
-                    &copy; {new Date().getFullYear()} Joyería Gilded. Todos los derechos reservados.
+                    &copy; {new Date().getFullYear()} {marca}. Todos los derechos reservados.
                 </div>
             </footer>
         </div>
