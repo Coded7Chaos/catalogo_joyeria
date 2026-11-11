@@ -388,7 +388,7 @@ export default function CatalogoTablero({
                 )}
 
                 {productos.data.length > 0 ? (
-                    <div className="mt-8 columns-2 gap-3 sm:gap-4 md:columns-3 lg:columns-4 xl:columns-5">
+                    <div className="mt-8 grid grid-cols-2 items-start gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                         {items.map((it) =>
                             it.type === 'editorial' ? (
                                 <EditorialTile key={it.key} kind={it.kind} ratio={it.ratio} />

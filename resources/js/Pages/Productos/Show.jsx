@@ -131,13 +131,13 @@ export default function Show({ producto, ruta = [], relacionados, seo }) {
                 <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-14">
                     {/* Gallery */}
                     <div>
-                        <div className="relative aspect-[4/5] overflow-hidden rounded-[28px] bg-rosa">
+                        <div className="relative overflow-hidden rounded-[28px] bg-rosa">
                             <StoreImage
                                 key={foto?.url ?? 'sin-foto'}
                                 src={foto?.url}
                                 alt={foto?.alt || `${producto.nombre}${variante?.valores?.length ? ` · ${etiquetaVariante(variante)}` : ''}`}
                                 fetchpriority="high"
-                                className="absolute inset-0 h-full w-full animate-rise object-cover"
+                                natural
                             />
                             {fotos.length > 1 && (
                                 <>
@@ -177,7 +177,7 @@ export default function Show({ producto, ruta = [], relacionados, seo }) {
                                             i === fotoIndex ? 'ring-vino' : 'ring-transparent hover:ring-vino/30'
                                         }`}
                                     >
-                                        <StoreImage src={f.url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+                                        <StoreImage src={f.url} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-contain" />
                                     </button>
                                 ))}
                             </div>

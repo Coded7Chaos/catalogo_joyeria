@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import StoreImage from './StoreImage';
 import { ArrowUpRight, HeartIcon } from './Icons';
-import { assets, coloresDe, fotoDe, precioDe, productoUrl, ratioFor } from '@/lib/catalogo';
+import { assets, coloresDe, fotoDe, precioDe, productoUrl } from '@/lib/catalogo';
 
 export function ProductTile({ producto, categoria, active, saved, canHover, onActivate, onSave }) {
     const precio = precioDe(producto);
@@ -18,21 +18,20 @@ export function ProductTile({ producto, categoria, active, saved, canHover, onAc
 
     return (
         <article
-            className="group relative mb-3 w-full break-inside-avoid overflow-hidden rounded-[18px] bg-rosa-deep sm:mb-4"
-            style={{ aspectRatio: ratioFor(producto.id) }}
+            className="group relative inline-block w-full break-inside-avoid overflow-hidden rounded-[18px] bg-rosa-deep align-top"
         >
             <Link
                 href={productoUrl(producto)}
                 onClick={handleClick}
                 aria-label={`${producto.nombre}, ${precio}`}
-                className="absolute inset-0 block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-vino"
+                className="relative block outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-vino"
             >
                 <StoreImage
                     src={fotoDe(producto)}
                     alt={producto.nombre}
                     loading="lazy"
                     decoding="async"
-                    className="absolute inset-0 h-full w-full max-w-none object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.04]"
+                    natural
                 />
 
                 {tag && (
@@ -99,7 +98,7 @@ export function ProductTile({ producto, categoria, active, saved, canHover, onAc
 export function EditorialTile({ kind, ratio }) {
     if (kind === 'good-things') {
         return (
-            <div className="mb-3 break-inside-avoid sm:mb-4">
+            <div className="break-inside-avoid">
                 <div className="relative w-full overflow-hidden rounded-[18px] bg-champan" style={{ aspectRatio: ratio }}>
                     <p className="absolute right-[14px] top-[23px] text-right font-hubballi text-[14px] leading-[normal] text-white">
                         Good
@@ -117,7 +116,7 @@ export function EditorialTile({ kind, ratio }) {
     }
     if (kind === 'temporada') {
         return (
-            <div className="mb-3 break-inside-avoid sm:mb-4">
+            <div className="break-inside-avoid">
                 <div
                     className="relative flex w-full flex-col justify-between overflow-hidden rounded-[18px] bg-marino p-4 text-white"
                     style={{ aspectRatio: ratio }}
@@ -131,7 +130,7 @@ export function EditorialTile({ kind, ratio }) {
         );
     }
     return (
-        <div className="mb-3 break-inside-avoid sm:mb-4">
+        <div className="break-inside-avoid">
             <div className="relative w-full overflow-hidden rounded-[18px]" style={{ aspectRatio: ratio }}>
                 <img alt="" src={assets.soyPrioridadBg} className="absolute inset-0 block h-full w-full max-w-none" />
                 <div className="relative flex h-full w-full flex-col items-center justify-center text-white">

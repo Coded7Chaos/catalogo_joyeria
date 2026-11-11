@@ -10,13 +10,13 @@ export default function RailCard({ producto, badge, className = '' }) {
 
     return (
         <article className={`group ${className}`}>
-            <Link href={href} className="relative block aspect-[4/5] w-full overflow-hidden bg-humo" aria-label={producto.nombre}>
+            <Link href={href} className="relative block w-full overflow-hidden bg-humo" aria-label={producto.nombre}>
                 <StoreImage
                     src={fotoDe(producto)}
                     alt={producto.nombre}
                     loading="lazy"
                     decoding="async"
-                    className="absolute inset-0 h-full w-full max-w-none object-cover transition-transform duration-700 group-hover:scale-105"
+                    natural
                 />
                 {badge && (
                     <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.14em] text-vino backdrop-blur sm:text-[11px]">

@@ -72,11 +72,6 @@ export const editorialTiles = [
     { id: 'soy', kind: 'soy-prioridad', ratio: '156 / 168', at: 6 },
 ];
 
-// Formas del tablero tipo Pinterest; cada pieza conserva la suya según su id.
-const RATIOS = ['4 / 5', '2 / 3', '1 / 1', '3 / 4', '5 / 4', '3 / 5', '4 / 5', '5 / 7'];
-
-export const ratioFor = (id) => RATIOS[Number(id) % RATIOS.length];
-
 export const formatPrice = (n) => `Bs. ${Number(n).toFixed(2)}`;
 
 /** Foto principal de un producto: la primera variante que tenga foto. */
