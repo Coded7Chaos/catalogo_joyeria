@@ -5,7 +5,8 @@
  * nombre del sitio, el título de inicio, la descripción y la imagen para compartir.
  */
 return [
-    'nombre_sitio' => env('APP_NAME', 'Joyería Gilded'),
+    // Independiente de APP_NAME para no depender de cómo esté escrito en el .env.
+    'nombre_sitio' => env('SEO_NOMBRE_SITIO', 'Qué elegancia la de Francia'),
 
     'lema' => 'Joyería exclusiva con diseños únicos',
 

@@ -67,7 +67,7 @@ export default function Seo({ ajustes, porDefecto, urls, estadisticas }) {
                                 <Contador valor={d.seo_titulo_inicio} max={70} />
                             </div>
                             <input value={d.seo_titulo_inicio} onChange={(e) => form.setData('seo_titulo_inicio', e.target.value)} placeholder={porDefecto.seo_titulo_inicio} maxLength={70} className={input} />
-                            <p className="mt-1 text-[11px] text-joya-gray">Incluye qué vendes y dónde, por ejemplo: "Gilded | Joyería en Santa Cruz, Bolivia".</p>
+                            <p className="mt-1 text-[11px] text-joya-gray">Incluye qué vendes y dónde, por ejemplo: "Qué elegancia la de Francia | Joyería en La Paz, Bolivia".</p>
                             {form.errors.seo_titulo_inicio && <p className="mt-1 text-xs text-red-500">{form.errors.seo_titulo_inicio}</p>}
                         </div>
                         <div>

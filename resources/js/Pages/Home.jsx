@@ -197,7 +197,7 @@ export default function Home({ novedades, totalProductos, productos, atributos, 
                 </section>
             )}
 
-            {/* Why Gilded (band from the design) */}
+            {/* Why us (band from the design) */}
             <section className="relative overflow-hidden text-white">
                 <img alt="" src={assets.heroSection} className="absolute inset-0 block h-full w-full max-w-none object-cover" />
                 <div className="relative mx-auto grid max-w-[1440px] gap-10 px-5 py-14 sm:px-8 md:grid-cols-3 lg:py-20">

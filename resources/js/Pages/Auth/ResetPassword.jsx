@@ -26,7 +26,7 @@ export default function ResetPassword({ token, email }) {
             <div className="min-h-[70vh] flex items-center justify-center bg-rosa py-16 px-4">
                 <div className="w-full max-w-md">
                     <div className="text-center mb-8">
-                        <img src="/images/logo-192.webp" alt="Gilded" className="h-20 w-20 object-contain rounded-full mx-auto mb-4" />
+                        <img src="/images/logo-192.webp" alt="Qué elegancia la de Francia" className="h-20 w-20 object-contain rounded-full mx-auto mb-4" />
                         <h1 className="font-display text-[40px] font-normal leading-none text-tinta">Crea una nueva contraseña</h1>
                         <p className="text-tinta/60 text-[15px] mt-3">Elige una contraseña que no hayas usado antes.</p>
                     </div>
