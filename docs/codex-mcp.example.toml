@@ -1,0 +1,7 @@
+# Sin secretos. Adaptar cwd y copiar este bloque a la configuración de Codex.
+[mcp_servers.catalogo_joyeria]
+command = "php"
+args = ["artisan", "mcp:start", "catalogo"]
+cwd = 'C:\Users\milae\Documents\joyeria\catalogo_joyeria'
+startup_timeout_sec = 30
+tool_timeout_sec = 60
