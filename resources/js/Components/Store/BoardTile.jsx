@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import StoreImage from './StoreImage';
 import { ArrowUpRight, HeartIcon } from './Icons';
-import { assets, coloresDe, fotoDe, precioDe, productoUrl } from '@/lib/catalogo';
+import { coloresDe, fotoDe, precioDe, productoUrl } from '@/lib/catalogo';
 
 export function ProductTile({ producto, categoria, active, saved, canHover, onActivate, onSave }) {
     const precio = precioDe(producto);
@@ -96,49 +96,18 @@ export function ProductTile({ producto, categoria, active, saved, canHover, onAc
 }
 
 export function EditorialTile({ kind, ratio }) {
-    if (kind === 'good-things') {
-        return (
-            <div className="break-inside-avoid">
-                <div className="relative w-full overflow-hidden rounded-[18px] bg-champan" style={{ aspectRatio: ratio }}>
-                    <p className="absolute right-[14px] top-[23px] text-right font-hubballi text-[14px] leading-[normal] text-white">
-                        Good
-                        <br />
-                        things
-                        <br />
-                        are
-                        <br />
-                        coming
-                    </p>
-                    <span className="absolute bottom-4 left-4 font-display text-4xl italic text-white/30">✶</span>
-                </div>
-            </div>
-        );
-    }
-    if (kind === 'temporada') {
-        return (
-            <div className="break-inside-avoid">
-                <div
-                    className="relative flex w-full flex-col justify-between overflow-hidden rounded-[18px] bg-marino p-4 text-white"
-                    style={{ aspectRatio: ratio }}
-                >
-                    <p className="font-hubballi text-[14px] uppercase tracking-[0.1em] text-white/70">Temporada</p>
-                    <p className="font-display text-[22px] leading-tight sm:text-[26px]">
-                        Brilla <em className="text-champan">a tu</em> manera
-                    </p>
-                </div>
-            </div>
-        );
-    }
+    const wide = kind === 'temporada';
+    const compact = kind === 'soy-prioridad';
+    const colors = kind === 'good-things' ? 'bg-champan text-vino-deep' : wide ? 'bg-vino text-white' : 'bg-marino text-white';
     return (
-        <div className="break-inside-avoid">
-            <div className="relative w-full overflow-hidden rounded-[18px]" style={{ aspectRatio: ratio }}>
-                <img alt="" src={assets.soyPrioridadBg} className="absolute inset-0 block h-full w-full max-w-none" />
-                <div className="relative flex h-full w-full flex-col items-center justify-center text-white">
-                    <p className="font-holtwood text-[14px] leading-[normal]">SOY PRIORIDAD,</p>
-                    <p className="-mt-0.5 ml-6 font-apple text-[14px] leading-[normal]">no opción</p>
-                    <img alt="" src={assets.soyPrioridadTrazo} width="54" height="29.0003" className="mt-3 block" />
-                </div>
-            </div>
+        <div
+            className={`relative flex w-full flex-col justify-center overflow-hidden rounded-[18px] ${compact ? 'p-3 sm:p-5' : 'p-5 sm:p-7'} ${colors}`}
+            style={{ aspectRatio: ratio }}
+        >
+            <span aria-hidden="true" className={`mb-5 font-display text-3xl opacity-50 ${compact ? 'hidden' : wide ? 'hidden sm:block' : ''}`}>✶</span>
+            <p className={`font-display leading-[1.08] ${compact ? 'text-[clamp(20px,2.5vw,36px)]' : 'text-[clamp(25px,3vw,44px)]'}`}>
+                {kind === 'good-things' ? <>Pequeños detalles,<br /><em>grandes sonrisas.</em></> : wide ? <>Un poquito de color.<br /><em>Mucho de ti.</em></> : <>Qué bonito<br />es <em>elegirte.</em></>}
+            </p>
         </div>
     );
 }

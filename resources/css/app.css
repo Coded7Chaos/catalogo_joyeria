@@ -21,6 +21,22 @@
     }
 }
 
+/* Natural image heights, two photo scales, and a consistent gutter at every breakpoint. */
+.product-mosaic {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 1px;
+    grid-auto-flow: row dense;
+    column-gap: 12px;
+    align-items: start;
+}
+@media (min-width: 768px) {
+    .product-mosaic { grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 16px; }
+}
+@media (min-width: 1024px) {
+    .product-mosaic { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
 /* Scrollbar elegante */
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;

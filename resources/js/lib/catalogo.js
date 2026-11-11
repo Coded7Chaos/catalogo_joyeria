@@ -67,9 +67,9 @@ export const findCategoria = (categorias, nombre) =>
 
 /** Tarjetas editoriales del tablero y la posición que ocupan, como en el frame de Figma. */
 export const editorialTiles = [
-    { id: 'good', kind: 'good-things', ratio: '88 / 150', at: 2 },
-    { id: 'temporada', kind: 'temporada', ratio: '197 / 155', at: 5 },
-    { id: 'soy', kind: 'soy-prioridad', ratio: '156 / 168', at: 6 },
+    { id: 'good', kind: 'good-things', ratio: '2 / 3', at: 2 },
+    { id: 'temporada', kind: 'temporada', ratio: '2 / 1', wide: true, at: 5 },
+    { id: 'soy', kind: 'soy-prioridad', ratio: '2 / 1', at: 8 },
 ];
 
 export const formatPrice = (n) => `Bs. ${Number(n).toFixed(2)}`;
