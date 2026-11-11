@@ -6,7 +6,7 @@ import { GemIcon } from './Icons';
  * <img> that swaps a missing design photo for its stand-in and, if a photo
  * still can't load (or there is none), shows a soft placeholder instead.
  */
-export default function StoreImage({ src, alt = '', className = '', style, ...props }) {
+export default function StoreImage({ src, alt = '', className = '', style, natural = false, ...props }) {
     const fallbackSrc = imageFallbacks[src];
     const [stage, setStage] = useState(src ? 'src' : 'error');
 
@@ -19,8 +19,8 @@ export default function StoreImage({ src, alt = '', className = '', style, ...pr
             <div
                 role="img"
                 aria-label={alt}
-                className={`grid place-items-center bg-gradient-to-br from-rosa-deep to-rosa text-vino/30 ${className}`}
-                style={style}
+                className={`grid place-items-center bg-gradient-to-br from-rosa-deep to-rosa text-vino/30 ${natural ? 'w-full' : ''} ${className}`}
+                style={natural ? { aspectRatio: '1 / 1', ...style } : style}
             >
                 <GemIcon width={40} height={40} />
             </div>
@@ -31,7 +31,7 @@ export default function StoreImage({ src, alt = '', className = '', style, ...pr
         <img
             src={stage === 'fallback' ? fallbackSrc : src}
             alt={alt}
-            className={className}
+            className={natural ? `block h-auto min-h-px w-full ${className}` : className}
             style={style}
             onError={() => setStage((s) => (s === 'src' && fallbackSrc ? 'fallback' : 'error'))}
             {...props}
