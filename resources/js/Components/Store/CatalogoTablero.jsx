@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import { EditorialTile, ProductTile } from './BoardTile';
+import ProductMosaic from './ProductMosaic';
 import Pagination from './Pagination';
 import { CloseIcon, FilterIcon, SearchIcon } from './Icons';
 import { aplanarCategorias, categoriaUrl, editorialTiles } from '@/lib/catalogo';
@@ -31,7 +32,7 @@ export default function CatalogoTablero({
     filtros,
     categoria = null,
     title,
-    showEditorial = false,
+    showEditorial = true,
 }) {
     const { categoriasMenu = [] } = usePage().props;
 
@@ -180,9 +181,13 @@ export default function CatalogoTablero({
         .filter(({ padre }) => padre?.hijas?.length);
 
     const items = useMemo(() => {
-        const list = productos.data.map((p) => ({ type: 'product', key: `p${p.id}`, producto: p }));
-        if (showEditorial && !hasActiveFilters && productos.current_page === 1 && list.length > 0) {
-            for (const { at, ...tile } of editorialTiles) {
+        const promotion = productos.data.find((p) => p.tags?.some((tag) => tag.descripcion.toUpperCase() === 'DESCUENTO'));
+        const list = productos.data.map((p, i) => ({
+            type: 'product', key: `p${p.id}`, producto: p,
+            featured: productos.data.length >= 4 && (i % 8 === 0 || (promotion ? p.id === promotion.id : i % 8 === 3)),
+        }));
+        if (showEditorial && !hasActiveFilters && productos.current_page === 1 && list.length >= 4) {
+            for (const { at, ...tile } of editorialTiles.slice(0, list.length >= 6 ? 3 : 2)) {
                 list.splice(Math.min(at, list.length), 0, { type: 'editorial', key: tile.id, ...tile });
             }
         }
@@ -388,8 +393,8 @@ export default function CatalogoTablero({
                 )}
 
                 {productos.data.length > 0 ? (
-                    <div className="mt-8 grid grid-cols-2 items-start gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                        {items.map((it) =>
+                    <ProductMosaic items={items}>
+                        {(it) =>
                             it.type === 'editorial' ? (
                                 <EditorialTile key={it.key} kind={it.kind} ratio={it.ratio} />
                             ) : (
@@ -403,9 +408,9 @@ export default function CatalogoTablero({
                                     onActivate={setActive}
                                     onSave={toggleSave}
                                 />
-                            ),
-                        )}
-                    </div>
+                            )
+                        }
+                    </ProductMosaic>
                 ) : (
                     <div className="py-20 text-center">
                         <p className="font-display text-2xl text-tinta/60">No encontramos piezas con esos filtros.</p>
